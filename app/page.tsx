@@ -42,7 +42,7 @@ export default function Home() {
             Fausto Zamparelli 
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl text-center">
-            Full stack developer currently based in Rome Italy, trying to experience the most out of this floating rock. Passionate about tech, movies, book and movies.</p>
+            Full stack developer currently based in Rome Italy, trying to experience the most out of this floating rock. Passionate about tech, movies, books and music.</p>
           <div className="flex flex-wrap gap-3 justify-center mb-8">
             <Button asChild>
               <Link href="https://github.com/faustozamparelli">
