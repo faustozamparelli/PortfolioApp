@@ -8,7 +8,8 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ["image.tmdb.org"],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
