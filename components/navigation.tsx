@@ -28,7 +28,7 @@ export default function Navigation() {
       <div className="max-w-[2000px] mx-auto px-4">
         <div className="flex h-16 items-center">
           <Link href="/" className="font-bold text-xl pl-4">
-            Your Name
+            Fausto Zamparelli
           </Link>
 
           {/* Desktop navigation */}

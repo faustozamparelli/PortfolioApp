@@ -31,7 +31,7 @@ export default function Home() {
         <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto">
           <div className="relative w-32 h-32 rounded-full overflow-hidden mb-6">
             <Image
-              src="/placeholder.svg?height=128&width=128"
+              src="/me.jpeg?height=128&width=128"
               alt="Profile"
               fill
               className="object-cover"
@@ -39,15 +39,13 @@ export default function Home() {
             />
           </div>
           <h1 className="text-4xl font-bold mb-2 text-center w-full">
-            Your Name
+            Fausto Zamparelli 
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl text-center">
-            Developer, music enthusiast, film buff, and avid reader with a
-            passion for continuous learning and growth.
-          </p>
+            Full stack developer currently based in Rome Italy, trying to experience the most out of this floating rock. Passionate about tech, movies, book and movies.</p>
           <div className="flex flex-wrap gap-3 justify-center mb-8">
             <Button asChild>
-              <Link href="https://github.com/yourusername">
+              <Link href="https://github.com/faustozamparelli">
                 <Github className="mr-2 h-4 w-4" />
                 GitHub
               </Link>
@@ -60,7 +58,7 @@ export default function Home() {
             </Button>
             <Button asChild variant="outline">
               <Link
-                href="https://yourblog.com"
+                href="https://faustozamparelli.com/blog"
                 target="_blank"
                 rel="noopener noreferrer"
               >
