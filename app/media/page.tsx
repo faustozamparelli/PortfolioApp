@@ -3,11 +3,8 @@
 import Image from "next/image";
 import { Star, StarHalf, ExternalLink, Filter, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
-import {
-  getMoviePoster,
-  getMovieDetails,
-  getMovieDetailsFromImdbUrl,
-} from "@/utils/movieApi";
+import { getMovieDetailsFromImdbUrl } from "@/utils/movieApi";
+import { getTVDetailsFromImdbUrl } from "@/utils/tvApi";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { MovieReviewModal } from "@/components/movie-review-modal";
+import { TVReviewModal } from "@/components/tv-review-modal";
 
 interface Movie {
   imdbUrl: string;
@@ -44,6 +42,23 @@ interface Movie {
   posterUrl?: string;
 }
 
+interface TVShow {
+  imdbUrl: string;
+  rating: number; // Required field, 0-10 with one decimal
+  review?: string;
+  isTopShow?: boolean;
+  // These fields are populated by the API
+  title?: string;
+  creator?: string;
+  firstAirYear?: number | null;
+  overview?: string;
+  genres?: string[];
+  posterUrl?: string;
+  numberOfSeasons?: number;
+  numberOfEpisodes?: number;
+}
+
+// Import your existing movies and topMovies arrays here
 const topMovies: Movie[] = [
   {
     // Demolition
@@ -753,30 +768,57 @@ const movies: Movie[] = [
   },
 ];
 
+// Add your TV shows data here
+const topShows: TVShow[] = [
+  {
+    // Death Note
+    imdbUrl: "https://www.imdb.com/title/tt0877057/",
+    rating: 10,
+    review: "",
+    isTopShow: true,
+  },
+];
+
+const shows: TVShow[] = [
+  {
+    // Big little lies
+    imdbUrl: "https://www.imdb.com/title/tt3920596/",
+    rating: 10,
+    review: "",
+  },
+  {
+    // Hunter x Hunter
+    imdbUrl: "https://www.imdb.com/title/tt2098220/",
+    rating: 10.8,
+    review: "",
+  },
+];
+
 function getRatingColor(rating: number) {
-  if (rating >= 11) return "bg-yellow-400 text-black";
-  if (rating >= 10) return "bg-green-500 text-black";
-  if (rating >= 9) return "bg-green-400 text-black";
-  if (rating >= 8) return "bg-green-300 text-black";
-  if (rating >= 7) return "bg-yellow-400 text-black";
-  if (rating >= 6) return "bg-yellow-500 text-black";
-  if (rating >= 5) return "bg-orange-400 text-black";
-  if (rating >= 4) return "bg-orange-500 text-black";
-  if (rating >= 3) return "bg-red-400 text-black";
-  return "bg-red-500 text-black";
+  if (rating >= 9) return "bg-green-500/20 text-green-500";
+  if (rating >= 7) return "bg-blue-500/20 text-blue-500";
+  if (rating >= 5) return "bg-yellow-500/20 text-yellow-500";
+  return "bg-red-500/20 text-red-500";
 }
 
-export default function MoviesPage() {
+export default function MediaPage() {
   const [moviesWithPosters, setMoviesWithPosters] = useState<Movie[]>([]);
   const [topMoviesWithPosters, setTopMoviesWithPosters] = useState<Movie[]>([]);
+  const [showsWithPosters, setShowsWithPosters] = useState<TVShow[]>([]);
+  const [topShowsWithPosters, setTopShowsWithPosters] = useState<TVShow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sortOption, setSortOption] = useState<string>("highest-rating");
-  const [originalOrder, setOriginalOrder] = useState<Movie[]>([]);
+  const [selectedShow, setSelectedShow] = useState<TVShow | null>(null);
+  const [isMovieModalOpen, setIsMovieModalOpen] = useState(false);
+  const [isTVModalOpen, setIsTVModalOpen] = useState(false);
+  const [movieSortOption, setMovieSortOption] =
+    useState<string>("highest-rating");
+  const [tvSortOption, setTVSortOption] = useState<string>("highest-rating");
+  const [movieOriginalOrder, setMovieOriginalOrder] = useState<Movie[]>([]);
+  const [tvOriginalOrder, setTVOriginalOrder] = useState<TVShow[]>([]);
 
   useEffect(() => {
-    async function fetchMovieData() {
+    async function fetchMediaData() {
       setIsLoading(true);
       try {
         // Fetch data for regular movies
@@ -822,8 +864,55 @@ export default function MoviesPage() {
           })
         );
 
-        // Store the original order with all movie details
-        setOriginalOrder(updatedMovies);
+        // Fetch data for regular TV shows
+        const updatedShows = await Promise.all(
+          shows.map(async (show) => {
+            console.log("Fetching details for TV show:", show.imdbUrl);
+            const showDetails = await getTVDetailsFromImdbUrl(show.imdbUrl);
+            console.log("Received TV show details:", showDetails);
+            if (showDetails) {
+              return {
+                ...show,
+                title: showDetails.title || show.title,
+                creator: showDetails.creator || show.creator,
+                firstAirYear: showDetails.firstAirYear || show.firstAirYear,
+                genres: showDetails.genres || show.genres,
+                posterUrl: showDetails.posterPath || "/placeholder.svg",
+                overview: showDetails.overview || "",
+                numberOfSeasons: showDetails.numberOfSeasons,
+                numberOfEpisodes: showDetails.numberOfEpisodes,
+              };
+            }
+            console.log("No details found for TV show:", show.imdbUrl);
+            return show;
+          })
+        );
+
+        // Fetch data for top TV shows
+        const updatedTopShows = await Promise.all(
+          topShows.map(async (show) => {
+            const showDetails = await getTVDetailsFromImdbUrl(show.imdbUrl);
+            if (showDetails) {
+              return {
+                ...show,
+                title: showDetails.title || show.title,
+                creator: showDetails.creator || show.creator,
+                firstAirYear: showDetails.firstAirYear || show.firstAirYear,
+                genres: showDetails.genres || show.genres,
+                posterUrl: showDetails.posterPath || "/placeholder.svg",
+                overview: showDetails.overview || "",
+                numberOfSeasons: showDetails.numberOfSeasons,
+                numberOfEpisodes: showDetails.numberOfEpisodes,
+                isTopShow: true,
+              };
+            }
+            return { ...show, isTopShow: true };
+          })
+        );
+
+        // Store the original order
+        setMovieOriginalOrder(updatedMovies);
+        setTVOriginalOrder(updatedShows);
 
         // Sort movies by rating (highest first) initially
         const sortedMovies = [...updatedMovies].sort(
@@ -831,27 +920,43 @@ export default function MoviesPage() {
         );
         setMoviesWithPosters(sortedMovies);
         setTopMoviesWithPosters(updatedTopMovies);
+
+        // Sort TV shows by rating (highest first) initially
+        const sortedShows = [...updatedShows].sort(
+          (a, b) => (b.rating || 0) - (a.rating || 0)
+        );
+        setShowsWithPosters(sortedShows);
+        setTopShowsWithPosters(updatedTopShows);
       } catch (error) {
-        console.error("Error fetching movie data:", error);
+        console.error("Error fetching media data:", error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchMovieData();
+    fetchMediaData();
   }, []);
 
-  const openReviewModal = (movie: Movie) => {
+  const openMovieReviewModal = (movie: Movie) => {
     setSelectedMovie(movie);
-    setIsModalOpen(true);
+    setIsMovieModalOpen(true);
   };
 
-  const closeReviewModal = () => {
-    setIsModalOpen(false);
+  const closeMovieReviewModal = () => {
+    setIsMovieModalOpen(false);
+  };
+
+  const openTVReviewModal = (show: TVShow) => {
+    setSelectedShow(show);
+    setIsTVModalOpen(true);
+  };
+
+  const closeTVReviewModal = () => {
+    setIsTVModalOpen(false);
   };
 
   const sortMovies = (option: string) => {
-    setSortOption(option);
+    setMovieSortOption(option);
     let sortedMovies = [...moviesWithPosters];
 
     switch (option) {
@@ -868,12 +973,10 @@ export default function MoviesPage() {
         sortedMovies.sort((a, b) => (a.year || 0) - (b.year || 0));
         break;
       case "newest-seen":
-        // For newest seen, we want to reverse the array since newest entries are at the end
-        sortedMovies = [...originalOrder].reverse();
+        sortedMovies = [...movieOriginalOrder].reverse();
         break;
       case "oldest-seen":
-        // For oldest seen, we want to keep the original order from the movies array
-        sortedMovies = [...originalOrder];
+        sortedMovies = [...movieOriginalOrder];
         break;
       default:
         sortedMovies.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -882,96 +985,232 @@ export default function MoviesPage() {
     setMoviesWithPosters(sortedMovies);
   };
 
+  const sortTVShows = (option: string) => {
+    setTVSortOption(option);
+    let sortedShows = [...showsWithPosters];
+
+    switch (option) {
+      case "highest-rating":
+        sortedShows.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "lowest-rating":
+        sortedShows.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+        break;
+      case "newest-show":
+        sortedShows.sort(
+          (a, b) => (b.firstAirYear || 0) - (a.firstAirYear || 0)
+        );
+        break;
+      case "oldest-show":
+        sortedShows.sort(
+          (a, b) => (a.firstAirYear || 0) - (b.firstAirYear || 0)
+        );
+        break;
+      case "newest-seen":
+        sortedShows = [...tvOriginalOrder].reverse();
+        break;
+      case "oldest-seen":
+        sortedShows = [...tvOriginalOrder];
+        break;
+      default:
+        sortedShows.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+
+    setShowsWithPosters(sortedShows);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-[98%] mx-auto">
-        <h1 className="text-4xl font-bold mb-4">My Movie Collection</h1>
+        <h1 className="text-4xl font-bold mb-4">My Media Collection</h1>
         <p className="text-muted-foreground mb-6">
-          A curated collection of films I have watched with personal ratings and
-          reviews. From classics to modern masterpieces, these are the movies
-          that have made me who i am. Small sidenote: Letterbox is trash
+          A curated collection of movies and TV shows I have watched with
+          personal ratings and reviews. From classics to modern masterpieces,
+          these are the pieces of media that have made me who I am.
         </p>
 
-        <div>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <>
-              {/* Top 5 Movies Section */}
-              <section className="mb-10">
-                <h2 className="text-2xl font-bold mb-4">Favourites</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {topMoviesWithPosters.map((movie, index) => (
-                    <TopMovieCard
-                      key={`${movie.title}-${movie.year}`}
-                      movie={movie}
-                      rank={index + 1}
-                      onReviewClick={openReviewModal}
-                    />
-                  ))}
-                </div>
-              </section>
+        <Tabs defaultValue="movies" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="movies">Movies</TabsTrigger>
+            <TabsTrigger value="tv">TV Shows</TabsTrigger>
+          </TabsList>
 
-              {/* All Movies Section */}
-              <section>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold">All Movies</h2>
-                    <div className="px-2 py-1 bg-muted rounded-md text-sm">
-                      {moviesWithPosters.length + topMoviesWithPosters.length}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Sort by:
-                    </span>
-                    <Select value={sortOption} onValueChange={sortMovies}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select sorting option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="highest-rating">
-                          Highest Rating
-                        </SelectItem>
-                        <SelectItem value="lowest-rating">
-                          Lowest Rating
-                        </SelectItem>
-                        <SelectItem value="newest-seen">Newest Seen</SelectItem>
-                        <SelectItem value="oldest-seen">Oldest Seen</SelectItem>
-                        <SelectItem value="newest-movie">
-                          Newest Movie
-                        </SelectItem>
-                        <SelectItem value="oldest-movie">
-                          Oldest Movie
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {moviesWithPosters.map((movie) => (
-                    <div key={movie.imdbUrl} className="h-full">
-                      <MovieCard
+          <TabsContent value="movies">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <>
+                {/* Top Movies Section */}
+                <section className="mb-10">
+                  <h2 className="text-2xl font-bold mb-4">Favourite Movies</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {topMoviesWithPosters.map((movie, index) => (
+                      <TopMovieCard
+                        key={`${movie.title}-${movie.year}`}
                         movie={movie}
-                        onReviewClick={openReviewModal}
+                        rank={index + 1}
+                        onReviewClick={openMovieReviewModal}
                       />
+                    ))}
+                  </div>
+                </section>
+
+                {/* All Movies Section */}
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-2xl font-bold">All Movies</h2>
+                      <div className="px-2 py-1 bg-muted rounded-md text-sm">
+                        {moviesWithPosters.length + topMoviesWithPosters.length}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            </>
-          )}
-        </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        Sort by:
+                      </span>
+                      <Select
+                        value={movieSortOption}
+                        onValueChange={sortMovies}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select sorting option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="highest-rating">
+                            Highest Rating
+                          </SelectItem>
+                          <SelectItem value="lowest-rating">
+                            Lowest Rating
+                          </SelectItem>
+                          <SelectItem value="newest-seen">
+                            Newest Seen
+                          </SelectItem>
+                          <SelectItem value="oldest-seen">
+                            Oldest Seen
+                          </SelectItem>
+                          <SelectItem value="newest-movie">
+                            Newest Movie
+                          </SelectItem>
+                          <SelectItem value="oldest-movie">
+                            Oldest Movie
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {moviesWithPosters.map((movie) => (
+                      <div key={movie.imdbUrl} className="h-full">
+                        <MovieCard
+                          movie={movie}
+                          onReviewClick={openMovieReviewModal}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="tv">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <>
+                {/* Top TV Shows Section */}
+                <section className="mb-10">
+                  <h2 className="text-2xl font-bold mb-4">
+                    Favourite TV Shows
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {topShowsWithPosters.map((show, index) => (
+                      <TopTVShowCard
+                        key={`${show.title}-${show.firstAirYear}`}
+                        show={show}
+                        rank={index + 1}
+                        onReviewClick={openTVReviewModal}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                {/* All TV Shows Section */}
+                <section>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-2xl font-bold">All TV Shows</h2>
+                      <div className="px-2 py-1 bg-muted rounded-md text-sm">
+                        {showsWithPosters.length + topShowsWithPosters.length}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        Sort by:
+                      </span>
+                      <Select value={tvSortOption} onValueChange={sortTVShows}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select sorting option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="highest-rating">
+                            Highest Rating
+                          </SelectItem>
+                          <SelectItem value="lowest-rating">
+                            Lowest Rating
+                          </SelectItem>
+                          <SelectItem value="newest-seen">
+                            Newest Seen
+                          </SelectItem>
+                          <SelectItem value="oldest-seen">
+                            Oldest Seen
+                          </SelectItem>
+                          <SelectItem value="newest-show">
+                            Newest Show
+                          </SelectItem>
+                          <SelectItem value="oldest-show">
+                            Oldest Show
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {showsWithPosters.map((show) => (
+                      <div key={show.imdbUrl} className="h-full">
+                        <TVShowCard
+                          show={show}
+                          onReviewClick={openTVReviewModal}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Movie Review Modal */}
       {selectedMovie && (
         <MovieReviewModal
-          isOpen={isModalOpen}
-          onClose={closeReviewModal}
+          isOpen={isMovieModalOpen}
+          onClose={closeMovieReviewModal}
           movie={selectedMovie}
+        />
+      )}
+
+      {/* TV Show Review Modal */}
+      {selectedShow && (
+        <TVReviewModal
+          isOpen={isTVModalOpen}
+          onClose={closeTVReviewModal}
+          show={selectedShow}
         />
       )}
     </div>
@@ -1161,6 +1400,203 @@ function MovieCard({
         >
           <a
             href={movie.imdbUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View on IMDb"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function TopTVShowCard({
+  show,
+  rank,
+  onReviewClick,
+}: {
+  show: TVShow;
+  rank: number;
+  onReviewClick: (show: TVShow) => void;
+}) {
+  return (
+    <Card
+      className={`overflow-hidden h-full flex flex-col ${
+        show.review ? "cursor-pointer hover:shadow-lg transition-shadow" : ""
+      }`}
+      onClick={() => show.review && onReviewClick(show)}
+    >
+      <div className="relative aspect-[2/3]">
+        <Image
+          src={show.posterUrl || "/placeholder.svg"}
+          alt={show.title || "TV show poster"}
+          fill
+          className="object-cover"
+        />
+        <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded-md font-medium text-sm">
+          #{rank}
+        </div>
+      </div>
+      <CardHeader className="p-3">
+        <div className="flex justify-between items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base truncate">
+              {show.title || "Loading..."}
+            </CardTitle>
+            <CardDescription className="text-xs truncate">
+              {show.creator || "Unknown"} •{" "}
+              {show.firstAirYear || "Unknown Year"}
+            </CardDescription>
+          </div>
+          <div
+            className={`px-2 py-1 rounded-md font-medium text-sm shrink-0 ${getRatingColor(
+              show.rating
+            )}`}
+          >
+            {Number.isInteger(show.rating)
+              ? show.rating
+              : show.rating.toFixed(1)}
+            /10
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 pt-0 flex-grow">
+        <div className="flex flex-wrap gap-1 mb-2">
+          {show.genres?.slice(0, 2).map((genre, index) => (
+            <span
+              key={index}
+              className="px-1.5 py-0.5 bg-muted text-xs rounded-md"
+            >
+              {genre}
+            </span>
+          ))}
+          {show.genres && show.genres.length > 2 && (
+            <span className="px-1.5 py-0.5 bg-muted text-xs rounded-md">
+              +{show.genres.length - 2}
+            </span>
+          )}
+        </div>
+        {show.overview && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+            {show.overview}
+          </p>
+        )}
+        {show.review && (
+          <div className="mt-1">
+            <Button variant="link" size="sm" className="p-0 h-auto text-xs">
+              Read my full review
+            </Button>
+          </div>
+        )}
+      </CardContent>
+      <div className="p-3 pt-0 flex justify-end">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="h-6 w-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <a
+            href={show.imdbUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View on IMDb"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function TVShowCard({
+  show,
+  onReviewClick,
+}: {
+  show: TVShow;
+  onReviewClick: (show: TVShow) => void;
+}) {
+  return (
+    <Card
+      className={`overflow-hidden h-full flex flex-col ${
+        show.review ? "cursor-pointer hover:shadow-lg transition-shadow" : ""
+      }`}
+      onClick={() => show.review && onReviewClick(show)}
+    >
+      <div className="relative aspect-[2/3]">
+        <Image
+          src={show.posterUrl || "/placeholder.svg"}
+          alt={show.title || "TV show poster"}
+          fill
+          className="object-cover"
+        />
+      </div>
+      <CardHeader className="p-3">
+        <div className="flex justify-between items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base truncate">
+              {show.title || "Loading..."}
+            </CardTitle>
+            <CardDescription className="text-xs truncate">
+              {show.creator || "Unknown"} •{" "}
+              {show.firstAirYear || "Unknown Year"}
+            </CardDescription>
+          </div>
+          <div
+            className={`px-2 py-1 rounded-md font-medium text-sm shrink-0 ${getRatingColor(
+              show.rating
+            )}`}
+          >
+            {Number.isInteger(show.rating)
+              ? show.rating
+              : show.rating.toFixed(1)}
+            /10
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 pt-0 flex-grow">
+        <div className="flex flex-wrap gap-1 mb-2">
+          {show.genres?.slice(0, 2).map((genre, index) => (
+            <span
+              key={index}
+              className="px-1.5 py-0.5 bg-muted text-xs rounded-md"
+            >
+              {genre}
+            </span>
+          ))}
+          {show.genres && show.genres.length > 2 && (
+            <span className="px-1.5 py-0.5 bg-muted text-xs rounded-md">
+              +{show.genres.length - 2}
+            </span>
+          )}
+        </div>
+        {show.overview && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+            {show.overview}
+          </p>
+        )}
+        {show.review && (
+          <div className="mt-1">
+            <Button variant="link" size="sm" className="p-0 h-auto text-xs">
+              Read my full review
+            </Button>
+          </div>
+        )}
+      </CardContent>
+      <div className="p-3 pt-0 flex justify-end">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="h-6 w-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <a
+            href={show.imdbUrl}
             target="_blank"
             rel="noopener noreferrer"
             title="View on IMDb"

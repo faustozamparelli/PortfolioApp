@@ -11,13 +11,13 @@ export default function Navigation() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Updated order: Home, Projects, Resume, Roadmap, Movies, Music, Books, Hobbies
+  // Updated order: Home, Projects, Resume, Roadmap, Media, Music, Books, Hobbies
   const routes = [
     { name: "Home", path: "/" },
     { name: "Projects", path: "/projects" },
     { name: "Resume", path: "/resume" },
     { name: "Roadmap", path: "/roadmap" },
-    { name: "Movies", path: "/movies" },
+    { name: "Media", path: "/media" },
     { name: "Music", path: "/music" },
     { name: "Books", path: "/books" },
     { name: "Hobbies", path: "/hobbies" },

@@ -39,10 +39,13 @@ export default function Home() {
             />
           </div>
           <h1 className="text-4xl font-bold mb-2 text-center w-full">
-            Fausto Zamparelli 
+            Fausto Zamparelli
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl text-center">
-            Full stack developer currently based in Rome Italy, trying to experience the most out of this floating rock. Passionate about tech, movies, books and music.</p>
+            Full stack developer currently based in Rome Italy, trying to
+            experience the most out of this floating rock. Passionate about
+            tech, movies, books and music.
+          </p>
           <div className="flex flex-wrap gap-3 justify-center mb-8">
             <Button asChild>
               <Link href="https://github.com/faustozamparelli">
@@ -110,10 +113,10 @@ export default function Home() {
         />
 
         <SectionCard
-          title="Movie Log"
+          title="Media Log"
           description="Browse through my favorite films with personal ratings and reviews."
           icon={<Film className="h-8 w-8" />}
-          href="/movies"
+          href="/media"
         />
 
         <SectionCard
