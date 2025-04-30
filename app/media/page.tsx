@@ -769,27 +769,94 @@ const movies: Movie[] = [
 ];
 
 // Add your TV shows data here
+// Top shows
 const topShows: TVShow[] = [
   {
     // Death Note
     imdbUrl: "https://www.imdb.com/title/tt0877057/",
+    rating: 11,
+    review: "",
+    isTopShow: true,
+  },
+  {
+    // Sherlock
+    imdbUrl: "https://www.imdb.com/title/tt1475582/",
+    rating: 10.5,
+    review: "",
+    isTopShow: true,
+  },
+  {
+    // The Office
+    imdbUrl: "https://www.imdb.com/title/tt0386676/",
     rating: 10,
+    review: "",
+    isTopShow: true,
+  },
+  {
+    // Big Little Lies
+    imdbUrl: "https://www.imdb.com/title/tt3920596/",
+    rating: 10,
+    review: "",
+    isTopShow: true,
+  },
+  {
+    // Silicon Valley
+    imdbUrl: "https://www.imdb.com/title/tt2575988/",
+    rating: 9.8,
+    review: "",
+    isTopShow: true,
+  },
+  {
+    // Mr Robot
+    imdbUrl: "https://www.imdb.com/title/tt4158110/",
+    rating: 9,
     review: "",
     isTopShow: true,
   },
 ];
 
+// All shows
 const shows: TVShow[] = [
   {
-    // Big little lies
-    imdbUrl: "https://www.imdb.com/title/tt3920596/",
-    rating: 10,
+    // Stranger Things
+    imdbUrl: "https://www.imdb.com/title/tt4574334/",
+    rating: 7.5,
+    review: "",
+  },
+  {
+    // Sex Education
+    imdbUrl: "https://www.imdb.com/title/tt7767422/",
+    rating: 5,
     review: "",
   },
   {
     // Hunter x Hunter
     imdbUrl: "https://www.imdb.com/title/tt2098220/",
-    rating: 10.8,
+    rating: 7.8,
+    review: "",
+  },
+  {
+    // Attack On Titan
+    imdbUrl: "https://www.imdb.com/title/tt2560140/",
+    rating: 6.8,
+    review: "",
+  },
+  {
+    // Severance
+    imdbUrl: "https://www.imdb.com/title/tt11280740/",
+    rating: 8.4,
+    review: "",
+  },
+  {
+    // Black Mirror
+    imdbUrl: "https://www.imdb.com/title/tt2085059/",
+    rating: 8,
+    review: "",
+  },
+  {
+    // Adolescence
+    imdbUrl: "https://www.imdb.com/title/tt31806037/",
+    rating: 6,
     review: "",
   },
 ];
