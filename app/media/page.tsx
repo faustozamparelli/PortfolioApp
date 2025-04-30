@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { MovieReviewModal } from "@/components/movie-review-modal";
 import { TVReviewModal } from "@/components/tv-review-modal";
+import { MediaStatsModal } from "@/components/media-stats-modal";
 
 interface Movie {
   imdbUrl: string;
@@ -883,6 +884,7 @@ export default function MediaPage() {
   const [tvSortOption, setTVSortOption] = useState<string>("highest-rating");
   const [movieOriginalOrder, setMovieOriginalOrder] = useState<Movie[]>([]);
   const [tvOriginalOrder, setTVOriginalOrder] = useState<TVShow[]>([]);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchMediaData() {
@@ -1089,7 +1091,12 @@ export default function MediaPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-[98%] mx-auto">
-        <h1 className="text-4xl font-bold mb-4">My Media Collection</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-4xl font-bold">My Media Collection</h1>
+          <Button onClick={() => setIsStatsModalOpen(true)}>
+            View Statistics
+          </Button>
+        </div>
         <p className="text-muted-foreground mb-6">
           A curated collection of movies and TV shows I have watched with
           personal ratings and reviews. From classics to modern masterpieces,
@@ -1262,6 +1269,16 @@ export default function MediaPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Stats Modal */}
+      <MediaStatsModal
+        isOpen={isStatsModalOpen}
+        onClose={() => setIsStatsModalOpen(false)}
+        movies={moviesWithPosters}
+        topMovies={topMoviesWithPosters}
+        shows={showsWithPosters}
+        topShows={topShowsWithPosters}
+      />
 
       {/* Movie Review Modal */}
       {selectedMovie && (
