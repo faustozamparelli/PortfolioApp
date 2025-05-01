@@ -1,8 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { Star, StarHalf, ExternalLink, Filter, Clock } from "lucide-react";
-import { useState, useEffect } from "react";
+import {
+  Star,
+  StarHalf,
+  ExternalLink,
+  Filter,
+  Clock,
+  Search,
+} from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getMovieDetailsFromImdbUrl } from "@/utils/movieApi";
 import { getTVDetailsFromImdbUrl } from "@/utils/tvApi";
 
@@ -863,10 +870,16 @@ const shows: TVShow[] = [
 ];
 
 function getRatingColor(rating: number) {
-  if (rating >= 9) return "bg-green-500/20 text-green-500";
-  if (rating >= 7) return "bg-blue-500/20 text-blue-500";
-  if (rating >= 5) return "bg-yellow-500/20 text-yellow-500";
-  return "bg-red-500/20 text-red-500";
+  if (rating >= 10) return "bg-amber-500/20 text-amber-500"; // Gold for 10-11
+  if (rating >= 9) return "bg-emerald-500/20 text-emerald-500"; // Emerald for 9-9.9
+  if (rating >= 8) return "bg-green-500/20 text-green-500"; // Green for 8-8.9
+  if (rating >= 7) return "bg-teal-500/20 text-teal-500"; // Teal for 7-7.9
+  if (rating >= 6) return "bg-blue-500/20 text-blue-500"; // Blue for 6-6.9
+  if (rating >= 5) return "bg-indigo-500/20 text-indigo-500"; // Indigo for 5-5.9
+  if (rating >= 4) return "bg-purple-500/20 text-purple-500"; // Purple for 4-4.9
+  if (rating >= 3) return "bg-yellow-500/20 text-yellow-500"; // Yellow for 3-3.9
+  if (rating >= 2) return "bg-orange-500/20 text-orange-500"; // Orange for 2-2.9
+  return "bg-red-500/20 text-red-500"; // Red for 0-1.9
 }
 
 export default function MediaPage() {
@@ -885,6 +898,7 @@ export default function MediaPage() {
   const [movieOriginalOrder, setMovieOriginalOrder] = useState<Movie[]>([]);
   const [tvOriginalOrder, setTVOriginalOrder] = useState<TVShow[]>([]);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function fetchMediaData() {
@@ -1088,6 +1102,47 @@ export default function MediaPage() {
     setShowsWithPosters(sortedShows);
   };
 
+  // Filter media based on search query
+  const filterMediaBySearchQuery = useCallback(
+    (mediaItems: Movie[] | TVShow[], query: string) => {
+      if (!query.trim()) {
+        return mediaItems;
+      }
+      const lowerCaseQuery = query.toLowerCase();
+      return mediaItems.filter(
+        (item) =>
+          (item.title && item.title.toLowerCase().includes(lowerCaseQuery)) ||
+          ((item as Movie).director &&
+            (item as Movie).director?.toLowerCase().includes(lowerCaseQuery)) ||
+          ((item as TVShow).creator &&
+            (item as TVShow).creator?.toLowerCase().includes(lowerCaseQuery)) ||
+          (item.overview &&
+            item.overview.toLowerCase().includes(lowerCaseQuery)) ||
+          (item.genres &&
+            item.genres.some((genre) =>
+              genre.toLowerCase().includes(lowerCaseQuery)
+            ))
+      );
+    },
+    []
+  );
+
+  // Filtered media items
+  const filteredMovies = useMemo(
+    () => filterMediaBySearchQuery(moviesWithPosters, searchQuery) as Movie[],
+    [moviesWithPosters, searchQuery, filterMediaBySearchQuery]
+  );
+
+  const filteredShows = useMemo(
+    () => filterMediaBySearchQuery(showsWithPosters, searchQuery) as TVShow[],
+    [showsWithPosters, searchQuery, filterMediaBySearchQuery]
+  );
+
+  // Handle search input change
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-[98%] mx-auto">
@@ -1131,13 +1186,37 @@ export default function MediaPage() {
                   </div>
                 </section>
 
+                {/* Search Bar for Movies */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      type="text"
+                      placeholder="Search movies by title, director, or genre..."
+                      className="pl-10 pr-4"
+                      value={searchQuery}
+                      onChange={handleSearchInputChange}
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 {/* All Movies Section */}
                 <section>
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-bold">All Movies</h2>
                       <div className="px-2 py-1 bg-muted rounded-md text-sm">
-                        {moviesWithPosters.length + topMoviesWithPosters.length}
+                        {filteredMovies.length}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1175,7 +1254,7 @@ export default function MediaPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {moviesWithPosters.map((movie) => (
+                    {filteredMovies.map((movie) => (
                       <div key={movie.imdbUrl} className="h-full">
                         <MovieCard
                           movie={movie}
@@ -1183,6 +1262,11 @@ export default function MediaPage() {
                         />
                       </div>
                     ))}
+                    {filteredMovies.length === 0 && searchQuery && (
+                      <div className="col-span-full text-center py-8 text-muted-foreground">
+                        No movies found matching "{searchQuery}"
+                      </div>
+                    )}
                   </div>
                 </section>
               </>
@@ -1213,13 +1297,37 @@ export default function MediaPage() {
                   </div>
                 </section>
 
+                {/* Search Bar for TV Shows */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      type="text"
+                      placeholder="Search TV shows by title, creator, or genre..."
+                      className="pl-10 pr-4"
+                      value={searchQuery}
+                      onChange={handleSearchInputChange}
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 {/* All TV Shows Section */}
                 <section>
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-bold">All TV Shows</h2>
                       <div className="px-2 py-1 bg-muted rounded-md text-sm">
-                        {showsWithPosters.length + topShowsWithPosters.length}
+                        {filteredShows.length}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1254,7 +1362,7 @@ export default function MediaPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {showsWithPosters.map((show) => (
+                    {filteredShows.map((show) => (
                       <div key={show.imdbUrl} className="h-full">
                         <TVShowCard
                           show={show}
@@ -1262,6 +1370,11 @@ export default function MediaPage() {
                         />
                       </div>
                     ))}
+                    {filteredShows.length === 0 && searchQuery && (
+                      <div className="col-span-full text-center py-8 text-muted-foreground">
+                        No TV shows found matching "{searchQuery}"
+                      </div>
+                    )}
                   </div>
                 </section>
               </>
@@ -1274,9 +1387,9 @@ export default function MediaPage() {
       <MediaStatsModal
         isOpen={isStatsModalOpen}
         onClose={() => setIsStatsModalOpen(false)}
-        movies={moviesWithPosters}
+        movies={filteredMovies}
         topMovies={topMoviesWithPosters}
-        shows={showsWithPosters}
+        shows={filteredShows}
         topShows={topShowsWithPosters}
       />
 

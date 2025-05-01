@@ -13,8 +13,12 @@ export async function getBookDetailsFromIsbn(
   isbn: string
 ): Promise<BookDetails | null> {
   try {
-    // Using Open Library API
-    const response = await fetch(`https://openlibrary.org/isbn/${isbn}.json`);
+    // Using our proxy API route to avoid CORS issues
+    const response = await fetch(
+      `/api/books?url=${encodeURIComponent(
+        `https://openlibrary.org/isbn/${isbn}.json`
+      )}`
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -24,7 +28,9 @@ export async function getBookDetailsFromIsbn(
     let author = "";
     if (data.authors && data.authors[0] && data.authors[0].key) {
       const authorResponse = await fetch(
-        `https://openlibrary.org${data.authors[0].key}.json`
+        `/api/books?url=${encodeURIComponent(
+          `https://openlibrary.org${data.authors[0].key}.json`
+        )}`
       );
       if (authorResponse.ok) {
         const authorData = await authorResponse.json();
@@ -32,7 +38,7 @@ export async function getBookDetailsFromIsbn(
       }
     }
 
-    // Get cover image
+    // Get cover image - no need to proxy this as it's just an image
     const coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
 
     return {
