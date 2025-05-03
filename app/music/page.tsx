@@ -25,7 +25,6 @@ import {
   SpotifyArtist,
   SpotifyPlaylist,
   getPlaylistById,
-  sampleTopArtists,
 } from "@/utils/spotifyApi";
 
 import { Button } from "@/components/ui/button";
@@ -207,89 +206,44 @@ const bestEverSongs = [
 // Manually added favorite artists with rankings
 const favoriteArtists: MusicItem[] = [
   {
-    spotifyUrl: "https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x",
-    rating: 11.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/3TVXtAsR1Inumwj472S9r4",
-    rating: 11.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/4MCBfE4596Uoi2O4DtmEMz",
-    rating: 11.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/1QAJqy2dA3ihHBFIHRphZj",
-    rating: 10.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/6lcwlkAjBPSKnFBZjjZFJs",
-    rating: 10.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/1wxPItEzr7U7rGSMPqZ25r",
-    rating: 10.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/15UsOTVnJzReFVN1VCnxy4",
-    rating: 9.5,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/6EPlBSH2RSiettczlz7ihV",
+    spotifyUrl: "https://open.spotify.com/artist/6MDME20pz9RveH9rEXvrOM",
+    type: "artist",
     rating: 9.8,
-    review: "",
+    review:
+      "The Weeknd creates amazing atmospheric music that I love listening to. His voice is incredible.",
+    rank: 1,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/4O15NlyKLIASxsJ0PrXPfz",
+    spotifyUrl: "https://open.spotify.com/artist/4tZwfgrHOc3mvqYlEYSvVi",
+    type: "artist",
+    rating: 9.5,
+    review:
+      "Daft Punk revolutionized electronic music with their innovative sound and visual aesthetics.",
+    rank: 2,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/2YZyLoL8N0Wb9xBt1NhZWg",
+    type: "artist",
+    rating: 9.3,
+    review:
+      "Kendrick Lamar's storytelling and lyricism are unmatched in modern hip-hop.",
+    rank: 3,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/46pWGuE3dSwY3bMMXGBvVS",
+    type: "artist",
     rating: 9.0,
-    review: "",
+    review:
+      "Rema has been pushing the boundaries of afrobeats with his unique sound.",
+    rank: 4,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/6FBDaR13swtiWwGhX1WQsP",
-    rating: 9.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/5H4yInM5zmHqpKIoMNAx4r",
+    spotifyUrl: "https://open.spotify.com/artist/7tYKF4w9nC0nq9CsPZTHyP",
+    type: "artist",
     rating: 8.8,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/4oLeXFyACqeem2VImYeBFe",
-    rating: 8.5,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/76v4Pri35CFciwoCIuvtCD",
-    rating: 8.4,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/0z4gvV4rjIZ9wHck67ucSV",
-    rating: 8.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/0fA0VVWsXO9YnASrzqfmYu",
-    rating: 8.0,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/3tlXnStJ1fFhdScmQeLpuG",
-    rating: 7.8,
-    review: "",
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/31TPClRtHm23RisEBtV3X7",
-    rating: 7.0,
-    review: "",
+    review:
+      "Victoria Monét's vocal range and production choices make her stand out.",
+    rank: 5,
   },
 ];
 
@@ -348,7 +302,13 @@ export default function MusicPage() {
   const [error, setError] = useState<string | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [genreData, setGenreData] = useState<{ name: string; value: number }[]>(
-    []
+    [
+      { name: "Hip Hop", value: 12 },
+      { name: "Pop", value: 8 },
+      { name: "R&B", value: 5 },
+      { name: "Dance", value: 3 },
+      { name: "Rock", value: 3 },
+    ]
   );
 
   // Add pagination state for favorite songs
@@ -452,7 +412,6 @@ export default function MusicPage() {
         } catch (err) {
           console.error("Error fetching recent artists:", err);
           // Fallback to sample data if needed
-          recentArtists = sampleTopArtists;
         }
 
         // Try to fetch user's playlists from Spotify, fallback to manual list if needed
@@ -684,7 +643,7 @@ export default function MusicPage() {
           {/* Artists Tab */}
           <TabsContent value="artists" className="mt-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {favoriteArtistsWithDetails.map((artist, index) => (
+              {favoriteArtistsWithDetails.map((artist) => (
                 <Card key={artist.spotifyUrl} className="overflow-hidden">
                   <div className="relative pb-[100%] overflow-hidden">
                     {artist.coverUrl ? (
@@ -701,7 +660,7 @@ export default function MusicPage() {
                       </div>
                     )}
                     <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                      #{index + 1}
+                      #{artist.rank}
                     </div>
                   </div>
                   <CardContent className="p-3">
@@ -867,12 +826,10 @@ export default function MusicPage() {
         </div>
       </section>
 
-      {isStatsModalOpen && (
-        <MusicStatsModal
-          isOpen={isStatsModalOpen}
-          onClose={() => setIsStatsModalOpen(false)}
-        />
-      )}
+      <MusicStatsModal
+        isOpen={isStatsModalOpen}
+        onClose={() => setIsStatsModalOpen(false)}
+      />
     </div>
   );
 }

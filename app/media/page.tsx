@@ -781,6 +781,12 @@ const movies: Movie[] = [
     review:
       "Holy shit. This movie hits hard. Just imagine if The Joker and Whiplash had a baby,this is it. It left a mark on me during the fake gun scene in the car; it really gave me a perspective shift on how mass murders happen. If we truly put ourselves in the shoes of people in these positions, we can start to feel bad for them instead of just calling them monsters. I don’t feel like this is just another Taxi Driver spinoff. In my opinion, it has more. It has darkness mixed with humor, mixed with cringe, mixed with determination and obsession. I liked the ending, but I expected a little more from it. That’s why it’s not a 10, but it came really close.",
   },
+  {
+    // On the count of three
+    imdbUrl: "https://www.imdb.com/title/tt11160650/",
+    rating: 7,
+    review: "",
+  },
 ];
 
 // Add your TV shows data here

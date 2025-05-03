@@ -40,13 +40,18 @@ export function MusicReviewModal({
 
   // Helper function to determine item type display name
   const getItemTypeName = () => {
-    // Since we no longer have a type field, we'll determine it from the URL
-    const url = item.spotifyUrl.toLowerCase();
-    if (url.includes("/track/")) return "Track";
-    if (url.includes("/album/")) return "Album";
-    if (url.includes("/artist/")) return "Artist";
-    if (url.includes("/playlist/")) return "Playlist";
-    return "Music";
+    switch (item.type) {
+      case "track":
+        return "Track";
+      case "album":
+        return "Album";
+      case "artist":
+        return "Artist";
+      case "playlist":
+        return "Playlist";
+      default:
+        return "Music";
+    }
   };
 
   return (

@@ -80,8 +80,11 @@ export interface SpotifyAlbum {
 // Interface for music collection entry - similar to your Movie interface
 export interface MusicItem {
   spotifyUrl: string;
+  type: "track" | "album" | "artist" | "playlist";
   rating: number; // 0-10 with one decimal
   review?: string;
+  isFavorite?: boolean;
+  rank?: number; // Ranking position for favorite artists
   // These fields will be populated by the Spotify API
   name?: string;
   artists?: string[];
@@ -247,6 +250,7 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
+              type: "track",
               rating: 0,
               name: data.name,
               artists: data.artists.map((a: any) => a.name),
@@ -265,6 +269,7 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
+              type: "album",
               rating: 0,
               name: data.name,
               artists: data.artists.map((a: any) => a.name),
@@ -284,6 +289,7 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
+              type: "artist",
               rating: 0,
               name: data.name,
               coverUrl: data.images[0]?.url,
@@ -300,6 +306,7 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
+              type: "playlist",
               rating: 0,
               name: data.name,
               coverUrl: data.images[0]?.url,
@@ -324,6 +331,7 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (track) {
         return {
           spotifyUrl: track.external_urls.spotify,
+          type: "track",
           rating: 0,
           name: track.name,
           artists: track.artists.map((a) => a.name),
@@ -342,6 +350,7 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (album) {
         return {
           spotifyUrl: album.external_urls.spotify,
+          type: "album",
           rating: 0,
           name: album.name,
           artists: album.artists.map((a) => a.name),
@@ -361,6 +370,7 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (artist) {
         return {
           spotifyUrl: artist.external_urls.spotify,
+          type: "artist",
           rating: 0,
           name: artist.name,
           coverUrl: artist.images[0].url,
@@ -377,6 +387,7 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (playlist) {
         return {
           spotifyUrl: playlist.external_urls.spotify,
+          type: "playlist",
           rating: 0,
           name: playlist.name,
           coverUrl: playlist.images[0].url,
@@ -386,6 +397,7 @@ export async function getMusicDetailsFromSpotifyUrl(
         // Create a placeholder for playlists not found in sample data
         return {
           spotifyUrl,
+          type: "playlist",
           rating: 0,
           name: `Playlist (ID: ${id.substring(0, 6)}...)`,
           coverUrl: "/placeholder.svg",
@@ -398,6 +410,7 @@ export async function getMusicDetailsFromSpotifyUrl(
     // Return a placeholder item as a fallback
     return {
       spotifyUrl,
+      type: type as "track" | "album" | "artist" | "playlist",
       rating: 0,
       name: `${
         type.charAt(0).toUpperCase() + type.slice(1)

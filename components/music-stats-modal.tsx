@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactElement } from "react";
 import {
   Dialog,
   DialogContent,
@@ -48,12 +48,18 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  CartesianGrid,
+  AreaChart,
+  Area,
 } from "recharts";
 
 interface MusicStatsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// Playlist ID for BEST (4)EVER
+const BEST_EVER_PLAYLIST_ID = "3FS5wKeNT7vvadtFYqDLRo";
 
 export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
   const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
@@ -71,6 +77,40 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
       { name: "Rock", value: 3 },
     ]
   );
+  const [decadeData, setDecadeData] = useState<
+    { name: string; count: number }[]
+  >([
+    { name: "2000s", count: 15 },
+    { name: "2010s", count: 10 },
+    { name: "1990s", count: 4 },
+    { name: "1980s", count: 2 },
+  ]);
+  const [durationStats, setDurationStats] = useState({
+    averageDuration: 0,
+    totalDuration: 0,
+    shortestTrack: { name: "", duration: 0, artist: "" },
+    longestTrack: { name: "", duration: 0, artist: "" },
+  });
+  const [popularityDistribution, setPopularityDistribution] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [tempoDistribution, setTempoDistribution] = useState<
+    { name: string; count: number }[]
+  >([]);
+  const [featuredArtists, setFeaturedArtists] = useState<
+    { name: string; count: number }[]
+  >([]);
+  const [artistDiversity, setArtistDiversity] = useState({
+    uniqueArtists: 0,
+    mostFrequentArtist: { name: "", count: 0 },
+    diversityScore: 0,
+  });
+  const [weeklyPatterns, setWeeklyPatterns] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [songsByYear, setSongsByYear] = useState<
+    { year: string; count: number }[]
+  >([]);
 
   // Static fallback data for BEST (4)EVER playlist artists
   const topArtistsFallback = [
@@ -82,14 +122,6 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
     { name: "Alicia Keys", count: 2 },
   ];
 
-  // Static data for release decades
-  const decadeData = [
-    { name: "2000s", count: 15 },
-    { name: "2010s", count: 10 },
-    { name: "1990s", count: 4 },
-    { name: "1980s", count: 2 },
-  ];
-
   const COLORS = [
     "#0088FE",
     "#00C49F",
@@ -98,6 +130,139 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
     "#8884D8",
     "#FF6B6B",
   ];
+
+  useEffect(() => {
+    async function fetchMusicStats() {
+      setLoading(true);
+      try {
+        // Try to fetch from API, fall back to sample data if there are errors
+        let tracksData: SpotifyTrack[] = [];
+        let artistsData: SpotifyArtist[] = [];
+        let playlistsData: SpotifyPlaylist[] = [];
+        let albumsData: SpotifyAlbum[] = [];
+
+        try {
+          tracksData = await getUserTopTracks();
+        } catch (err) {
+          console.error("Error fetching top tracks:", err);
+        }
+
+        try {
+          artistsData = await getUserTopArtists();
+        } catch (err) {
+          console.error("Error fetching top artists:", err);
+        }
+
+        try {
+          playlistsData = await getUserPlaylists();
+        } catch (err) {
+          console.error("Error fetching playlists:", err);
+        }
+
+        try {
+          albumsData = await getUserSavedAlbums();
+        } catch (err) {
+          console.error("Error fetching saved albums:", err);
+        }
+
+        // Calculate genres from artist data
+        const genreCounts: Record<string, number> = {};
+
+        artistsData.forEach((artist) => {
+          if (artist.genres) {
+            artist.genres.forEach((genre) => {
+              genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+            });
+          }
+        });
+
+        // Create genre data for visualization
+        const calculatedGenres = Object.entries(genreCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, count]) => ({ name, value: count }));
+
+        if (calculatedGenres.length > 0) {
+          setGenreData(calculatedGenres);
+        }
+
+        // Calculate duration statistics if we have tracks
+        if (tracksData.length > 0) {
+          let totalDuration = 0;
+          let shortestTrack = {
+            name: "",
+            duration: Number.MAX_SAFE_INTEGER,
+            artist: "",
+          };
+          let longestTrack = { name: "", duration: 0, artist: "" };
+
+          tracksData.forEach((track) => {
+            if (track.duration_ms) {
+              totalDuration += track.duration_ms;
+
+              if (track.duration_ms < shortestTrack.duration) {
+                shortestTrack = {
+                  name: track.name,
+                  duration: track.duration_ms,
+                  artist: track.artists?.[0]?.name || "Unknown",
+                };
+              }
+
+              if (track.duration_ms > longestTrack.duration) {
+                longestTrack = {
+                  name: track.name,
+                  duration: track.duration_ms,
+                  artist: track.artists?.[0]?.name || "Unknown",
+                };
+              }
+            }
+          });
+
+          const averageDuration = totalDuration / tracksData.length;
+
+          setDurationStats({
+            averageDuration,
+            totalDuration,
+            shortestTrack,
+            longestTrack,
+          });
+        }
+
+        // Set weekly patterns
+        setWeeklyPatterns(generateWeekdayData());
+
+        // Calculate songs by year if we have tracks
+        if (tracksData.length > 0) {
+          setSongsByYear(calculateSongsByYear(tracksData));
+        }
+
+        setTopTracks(tracksData);
+        setTopArtists(artistsData);
+        setPlaylists(playlistsData);
+        setSavedAlbums(albumsData);
+      } catch (error) {
+        console.error("Error fetching music stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (isOpen) {
+      fetchMusicStats();
+    }
+  }, [isOpen]);
+
+  const formatTotalTime = (ms: number) => {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    return `${hours}h ${minutes}m`;
+  };
+
+  const formatTrackDuration = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   // Utility functions for enhanced statistics
 
@@ -131,7 +296,7 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
   };
 
   // Playlist insights
-  const getLargestPlaylist = (playlists: SpotifyPlaylist[]): JSX.Element => {
+  const getLargestPlaylist = (playlists: SpotifyPlaylist[]): ReactElement => {
     if (!playlists.length) {
       return (
         <p className="text-sm text-muted-foreground">No playlists available</p>
@@ -161,7 +326,7 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
     );
   };
 
-  const getRecentPlaylists = (playlists: SpotifyPlaylist[]): JSX.Element => {
+  const getRecentPlaylists = (playlists: SpotifyPlaylist[]): ReactElement => {
     if (!playlists.length) {
       return (
         <p className="text-sm text-muted-foreground">No playlists available</p>
@@ -353,77 +518,6 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
       }))
       .sort((a, b) => b.avgPopularity - a.avgPopularity);
   };
-
-  useEffect(() => {
-    async function fetchMusicStats() {
-      setLoading(true);
-      try {
-        // Try to fetch from API, fall back to sample data if there are errors
-        let tracksData: SpotifyTrack[] = [];
-        let artistsData: SpotifyArtist[] = [];
-        let playlistsData: SpotifyPlaylist[] = [];
-        let albumsData: SpotifyAlbum[] = [];
-
-        try {
-          tracksData = await getUserTopTracks();
-        } catch (err) {
-          console.error("Error fetching top tracks:", err);
-        }
-
-        try {
-          artistsData = await getUserTopArtists();
-        } catch (err) {
-          console.error("Error fetching top artists:", err);
-        }
-
-        try {
-          playlistsData = await getUserPlaylists();
-        } catch (err) {
-          console.error("Error fetching playlists:", err);
-        }
-
-        try {
-          albumsData = await getUserSavedAlbums();
-        } catch (err) {
-          console.error("Error fetching saved albums:", err);
-        }
-
-        // Calculate genres from artist data
-        const genreCounts: Record<string, number> = {};
-
-        artistsData.forEach((artist) => {
-          if (artist.genres) {
-            artist.genres.forEach((genre) => {
-              genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-            });
-          }
-        });
-
-        // Create genre data for visualization
-        const calculatedGenres = Object.entries(genreCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, count]) => ({ name, value: count }));
-
-        if (calculatedGenres.length > 0) {
-          setGenreData(calculatedGenres);
-        }
-
-        setTopTracks(tracksData);
-        setTopArtists(artistsData);
-        setPlaylists(playlistsData);
-        setSavedAlbums(albumsData);
-      } catch (error) {
-        console.error("Error fetching music stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (isOpen) {
-      fetchMusicStats();
-    }
-  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
