@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, ReactElement } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,14 +15,20 @@ import {
   Disc,
   User,
   ListMusic,
-  ExternalLink,
-  Star,
-  Clock,
+  Calendar,
   HeadphonesIcon,
   BarChart2,
+  Star,
+  Clock,
   AlbumIcon,
-  Calendar,
   Radio,
+  Sparkles,
+  Flame,
+  Heart,
+  Calendar as CalendarIcon,
+  LineChart,
+  Clock3,
+  Globe,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -36,7 +42,13 @@ import {
   SpotifyAlbum,
   formatDuration,
 } from "@/utils/spotifyApi";
-import { Card, CardContent } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import {
   Bar,
   BarChart,
@@ -51,6 +63,11 @@ import {
   CartesianGrid,
   AreaChart,
   Area,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from "recharts";
 
 interface MusicStatsModalProps {
@@ -58,305 +75,117 @@ interface MusicStatsModalProps {
   onClose: () => void;
 }
 
-// Playlist ID for BEST (4)EVER
-const BEST_EVER_PLAYLIST_ID = "3FS5wKeNT7vvadtFYqDLRo";
-
 export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
   const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
   const [topArtists, setTopArtists] = useState<SpotifyArtist[]>([]);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [savedAlbums, setSavedAlbums] = useState<SpotifyAlbum[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>("overview");
-  const [genreData, setGenreData] = useState<{ name: string; value: number }[]>(
-    [
-      { name: "Hip Hop", value: 12 },
-      { name: "Pop", value: 8 },
-      { name: "R&B", value: 5 },
-      { name: "Dance", value: 3 },
-      { name: "Rock", value: 3 },
-    ]
-  );
-  const [decadeData, setDecadeData] = useState<
-    { name: string; count: number }[]
-  >([
-    { name: "2000s", count: 15 },
-    { name: "2010s", count: 10 },
-    { name: "1990s", count: 4 },
-    { name: "1980s", count: 2 },
-  ]);
-  const [durationStats, setDurationStats] = useState({
-    averageDuration: 0,
-    totalDuration: 0,
-    shortestTrack: { name: "", duration: 0, artist: "" },
-    longestTrack: { name: "", duration: 0, artist: "" },
-  });
-  const [popularityDistribution, setPopularityDistribution] = useState<
-    { name: string; value: number }[]
-  >([]);
-  const [tempoDistribution, setTempoDistribution] = useState<
-    { name: string; count: number }[]
-  >([]);
-  const [featuredArtists, setFeaturedArtists] = useState<
-    { name: string; count: number }[]
-  >([]);
-  const [artistDiversity, setArtistDiversity] = useState({
-    uniqueArtists: 0,
-    mostFrequentArtist: { name: "", count: 0 },
-    diversityScore: 0,
-  });
-  const [weeklyPatterns, setWeeklyPatterns] = useState<
-    { name: string; value: number }[]
-  >([]);
-  const [songsByYear, setSongsByYear] = useState<
-    { year: string; count: number }[]
-  >([]);
+  const [activeTab, setActiveTab] = useState<string>("musical-identity");
 
-  // Static fallback data for BEST (4)EVER playlist artists
-  const topArtistsFallback = [
-    { name: "Black Eyed Peas", count: 3 },
-    { name: "50 Cent", count: 2 },
-    { name: "Kid Cudi", count: 3 },
-    { name: "JAY-Z", count: 2 },
-    { name: "Justin Timberlake", count: 3 },
-    { name: "Alicia Keys", count: 2 },
-  ];
-
+  // Color palette for charts
   const COLORS = [
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
-    "#8884D8",
     "#FF6B6B",
+    "#4ECDC4",
+    "#FFD166",
+    "#88D9E6",
+    "#6A0572",
+    "#6A0572",
   ];
 
+  // Fetch data when the modal opens
   useEffect(() => {
-    async function fetchMusicStats() {
+    async function fetchMusicData() {
       setLoading(true);
       try {
-        // Try to fetch from API, fall back to sample data if there are errors
-        let tracksData: SpotifyTrack[] = [];
-        let artistsData: SpotifyArtist[] = [];
-        let playlistsData: SpotifyPlaylist[] = [];
-        let albumsData: SpotifyAlbum[] = [];
+        // Fetch data from Spotify API
+        const [tracks, artists, userPlaylists, albums] =
+          await Promise.allSettled([
+            getUserTopTracks(),
+            getUserTopArtists(),
+            getUserPlaylists(),
+            getUserSavedAlbums(),
+          ]);
 
-        try {
-          tracksData = await getUserTopTracks();
-        } catch (err) {
-          console.error("Error fetching top tracks:", err);
-        }
-
-        try {
-          artistsData = await getUserTopArtists();
-        } catch (err) {
-          console.error("Error fetching top artists:", err);
-        }
-
-        try {
-          playlistsData = await getUserPlaylists();
-        } catch (err) {
-          console.error("Error fetching playlists:", err);
-        }
-
-        try {
-          albumsData = await getUserSavedAlbums();
-        } catch (err) {
-          console.error("Error fetching saved albums:", err);
-        }
-
-        // Calculate genres from artist data
-        const genreCounts: Record<string, number> = {};
-
-        artistsData.forEach((artist) => {
-          if (artist.genres) {
-            artist.genres.forEach((genre) => {
-              genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-            });
-          }
-        });
-
-        // Create genre data for visualization
-        const calculatedGenres = Object.entries(genreCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, count]) => ({ name, value: count }));
-
-        if (calculatedGenres.length > 0) {
-          setGenreData(calculatedGenres);
-        }
-
-        // Calculate duration statistics if we have tracks
-        if (tracksData.length > 0) {
-          let totalDuration = 0;
-          let shortestTrack = {
-            name: "",
-            duration: Number.MAX_SAFE_INTEGER,
-            artist: "",
-          };
-          let longestTrack = { name: "", duration: 0, artist: "" };
-
-          tracksData.forEach((track) => {
-            if (track.duration_ms) {
-              totalDuration += track.duration_ms;
-
-              if (track.duration_ms < shortestTrack.duration) {
-                shortestTrack = {
-                  name: track.name,
-                  duration: track.duration_ms,
-                  artist: track.artists?.[0]?.name || "Unknown",
-                };
-              }
-
-              if (track.duration_ms > longestTrack.duration) {
-                longestTrack = {
-                  name: track.name,
-                  duration: track.duration_ms,
-                  artist: track.artists?.[0]?.name || "Unknown",
-                };
-              }
-            }
-          });
-
-          const averageDuration = totalDuration / tracksData.length;
-
-          setDurationStats({
-            averageDuration,
-            totalDuration,
-            shortestTrack,
-            longestTrack,
-          });
-        }
-
-        // Set weekly patterns
-        setWeeklyPatterns(generateWeekdayData());
-
-        // Calculate songs by year if we have tracks
-        if (tracksData.length > 0) {
-          setSongsByYear(calculateSongsByYear(tracksData));
-        }
-
-        setTopTracks(tracksData);
-        setTopArtists(artistsData);
-        setPlaylists(playlistsData);
-        setSavedAlbums(albumsData);
+        if (tracks.status === "fulfilled") setTopTracks(tracks.value);
+        if (artists.status === "fulfilled") setTopArtists(artists.value);
+        if (userPlaylists.status === "fulfilled")
+          setPlaylists(userPlaylists.value);
+        if (albums.status === "fulfilled") setSavedAlbums(albums.value);
       } catch (error) {
-        console.error("Error fetching music stats:", error);
+        console.error("Error fetching music data:", error);
       } finally {
         setLoading(false);
       }
     }
 
     if (isOpen) {
-      fetchMusicStats();
+      fetchMusicData();
     }
   }, [isOpen]);
 
-  const formatTotalTime = (ms: number) => {
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    return `${hours}h ${minutes}m`;
+  // Data processing functions
+  const getGenreData = (): { name: string; value: number }[] => {
+    const genreCounts: Record<string, number> = {};
+
+    topArtists.forEach((artist) => {
+      if (artist.genres) {
+        artist.genres.forEach((genre) => {
+          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        });
+      }
+    });
+
+    // Create genre data sorted by count
+    return Object.entries(genreCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, value: count }));
   };
 
-  const formatTrackDuration = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  const getDecadeData = (): { name: string; count: number }[] => {
+    const decades: Record<string, number> = {};
+
+    topTracks.forEach((track) => {
+      if (track.album?.release_date) {
+        const year = parseInt(track.album.release_date.substring(0, 4));
+        const decade = `${Math.floor(year / 10) * 10}s`;
+        decades[decade] = (decades[decade] || 0) + 1;
+      }
+    });
+
+    return Object.entries(decades)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => {
+        // Extract the decade number for proper sorting
+        const decadeA = parseInt(a.name.substring(0, 4));
+        const decadeB = parseInt(b.name.substring(0, 4));
+        return decadeA - decadeB;
+      });
   };
 
-  // Utility functions for enhanced statistics
+  const getArtistDiversity = (): number => {
+    if (!topTracks.length) return 0;
+    const uniqueArtists = new Set();
 
-  // Duration calculations
-  const calculateTotalDuration = (tracks: SpotifyTrack[]): number => {
-    return tracks.reduce((total, track) => total + (track.duration_ms || 0), 0);
+    topTracks.forEach((track) => {
+      track.artists?.forEach((artist) => uniqueArtists.add(artist.id));
+    });
+
+    return parseFloat((uniqueArtists.size / topTracks.length).toFixed(2));
   };
 
-  const formatTotalDuration = (ms: number): string => {
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    return `${hours}h ${minutes}m`;
+  const getListeningActivityPattern = (): { name: string; value: number }[] => {
+    // This would ideally use real data, but generating sample data for now
+    return [
+      { name: "Morning", value: Math.floor(Math.random() * 40) + 10 },
+      { name: "Afternoon", value: Math.floor(Math.random() * 40) + 20 },
+      { name: "Evening", value: Math.floor(Math.random() * 40) + 30 },
+      { name: "Night", value: Math.floor(Math.random() * 40) + 15 },
+    ];
   };
 
-  const calculateAverageDuration = (tracks: SpotifyTrack[]): string => {
-    if (!tracks.length) return "0:00";
-    const avgMs = calculateTotalDuration(tracks) / tracks.length;
-    return formatDuration(avgMs);
-  };
-
-  const calculatePlaylistsTime = (playlists: SpotifyPlaylist[]): string => {
-    // Estimate total time - assumed average 3.5 minutes per track
-    const totalTracksEstimate = playlists.reduce(
-      (total, playlist) => total + (playlist.tracks?.total || 0),
-      0
-    );
-    const totalHours = Math.floor(
-      (totalTracksEstimate * 3.5 * 60 * 1000) / 3600000
-    );
-    return `${totalHours}+`;
-  };
-
-  // Playlist insights
-  const getLargestPlaylist = (playlists: SpotifyPlaylist[]): ReactElement => {
-    if (!playlists.length) {
-      return (
-        <p className="text-sm text-muted-foreground">No playlists available</p>
-      );
-    }
-    const largest = [...playlists].sort(
-      (a, b) => (b.tracks?.total || 0) - (a.tracks?.total || 0)
-    )[0];
-
-    return (
-      <div className="flex items-center gap-3">
-        <div className="relative w-12 h-12 rounded overflow-hidden">
-          <Image
-            src={largest.images?.[0]?.url || "/placeholder.svg"}
-            alt={largest.name}
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div>
-          <p className="font-medium">{largest.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {largest.tracks?.total || 0} tracks
-          </p>
-        </div>
-      </div>
-    );
-  };
-
-  const getRecentPlaylists = (playlists: SpotifyPlaylist[]): ReactElement => {
-    if (!playlists.length) {
-      return (
-        <p className="text-sm text-muted-foreground">No playlists available</p>
-      );
-    }
-    // Using first playlist as "most recent" since we don't have updated_at data
-    const recent = playlists[0];
-
-    return (
-      <div className="flex items-center gap-3">
-        <div className="relative w-12 h-12 rounded overflow-hidden">
-          <Image
-            src={recent.images?.[0]?.url || "/placeholder.svg"}
-            alt={recent.name}
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div>
-          <p className="font-medium">{recent.name}</p>
-          <p className="text-xs text-muted-foreground">
-            By {recent.owner?.display_name || "Unknown"}
-          </p>
-        </div>
-      </div>
-    );
-  };
-
-  // Duration distribution analysis
-  const calculateDurationDistribution = (tracks: SpotifyTrack[]) => {
+  const getDurationDistribution = (): { range: string; count: number }[] => {
     const ranges = [
       { range: "< 2 min", count: 0 },
       { range: "2-3 min", count: 0 },
@@ -365,7 +194,7 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
       { range: "5+ min", count: 0 },
     ];
 
-    tracks.forEach((track) => {
+    topTracks.forEach((track) => {
       const durationMin = (track.duration_ms || 0) / 60000;
       if (durationMin < 2) ranges[0].count++;
       else if (durationMin < 3) ranges[1].count++;
@@ -377,157 +206,144 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
     return ranges;
   };
 
-  // Artist diversity metrics
-  const calculateUniqueArtists = (tracks: SpotifyTrack[]): number => {
-    const artistIds = new Set();
-    tracks.forEach((track) => {
-      track.artists?.forEach((artist) => artistIds.add(artist.id));
-    });
-    return artistIds.size;
-  };
-
-  const getMostFrequentArtist = (tracks: SpotifyTrack[]) => {
-    const artistCounts: Record<string, { name: string; count: number }> = {};
-
-    tracks.forEach((track) => {
-      track.artists?.forEach((artist) => {
-        if (!artistCounts[artist.id]) {
-          artistCounts[artist.id] = { name: artist.name, count: 0 };
-        }
-        artistCounts[artist.id].count++;
-      });
-    });
-
-    return Object.values(artistCounts).sort((a, b) => b.count - a.count)[0];
-  };
-
-  const calculateArtistDiversity = (tracks: SpotifyTrack[]): number => {
-    if (!tracks.length) return 0;
-    return calculateUniqueArtists(tracks) / tracks.length;
-  };
-
-  // Weekly pattern estimation (simulated data)
-  const generateWeekdayData = () => {
-    // Mock data for listening patterns - replace with real data if available
+  const getMoodMap = (): any[] => {
+    // Sample data - would integrate with Spotify audio features API
     return [
-      { name: "Monday", value: 35 },
-      { name: "Tuesday", value: 30 },
-      { name: "Wednesday", value: 42 },
-      { name: "Thursday", value: 38 },
-      { name: "Friday", value: 52 },
-      { name: "Saturday", value: 60 },
-      { name: "Sunday", value: 48 },
+      { subject: "Energy", A: 80, fullMark: 100 },
+      { subject: "Danceability", A: 75, fullMark: 100 },
+      { subject: "Acousticness", A: 45, fullMark: 100 },
+      { subject: "Positivity", A: 65, fullMark: 100 },
+      { subject: "Instrumentalness", A: 35, fullMark: 100 },
+      { subject: "Liveness", A: 60, fullMark: 100 },
     ];
   };
 
-  // Songs by year calculation
-  const calculateSongsByYear = (tracks: SpotifyTrack[]) => {
-    const yearCounts: Record<string, number> = {};
-
-    tracks.forEach((track) => {
-      if (track.album?.release_date) {
-        const year = track.album.release_date.substring(0, 4);
-        yearCounts[year] = (yearCounts[year] || 0) + 1;
-      }
-    });
-
-    return Object.entries(yearCounts)
-      .map(([year, count]) => ({ year, count }))
-      .sort((a, b) => a.year.localeCompare(b.year));
-  };
-
-  // Audio features analysis (simulated)
-  const getAverageFeature = (feature: string) => {
-    // Mock data for audio features - would need Spotify audio features API
-    const features = {
-      danceability: 0.72,
-      energy: 0.67,
-      acousticness: 0.28,
-      instrumentalness: 0.14,
-    };
-    return features[feature as keyof typeof features] || 0.5;
-  };
-
-  const getMoodDistribution = () => {
-    return [
-      { name: "Energetic", value: 35 },
-      { name: "Calm", value: 25 },
-      { name: "Happy", value: 20 },
-      { name: "Melancholic", value: 20 },
-    ];
-  };
-
-  const getTempoDistribution = () => {
-    return [
-      { range: "Slow (<100 BPM)", count: 20 },
-      { range: "Medium (100-120 BPM)", count: 30 },
-      { range: "Fast (120-140 BPM)", count: 35 },
-      { range: "Very Fast (140+ BPM)", count: 15 },
-    ];
-  };
-
-  const getKeyDistribution = () => {
-    return [
-      { name: "C", value: 15 },
-      { name: "D", value: 10 },
-      { name: "E", value: 8 },
-      { name: "F", value: 12 },
-      { name: "G", value: 18 },
-      { name: "A", value: 14 },
-      { name: "B", value: 7 },
-      { name: "Other", value: 16 },
-    ];
-  };
-
-  // Genre analysis functions
-  const getMultiGenreArtists = (artists: SpotifyArtist[]) => {
-    return artists
-      .filter((artist) => (artist.genres?.length || 0) > 2)
-      .slice(0, 4);
-  };
-
-  const getPlaylistGenreDiversity = (playlists: SpotifyPlaylist[]) => {
-    // Mock data - in reality would need to analyze the genres of tracks in each playlist
-    return playlists.map((playlist) => ({
-      name: playlist.name,
-      genreCount: Math.floor(Math.random() * 10) + 3, // Random number between 3-12
+  const getTopArtistsWithImage = () => {
+    return topArtists.slice(0, 5).map((artist) => ({
+      id: artist.id,
+      name: artist.name,
+      image: artist.images?.[0]?.url || "/placeholder.svg",
+      popularity: artist.popularity || 0,
+      genres: artist.genres?.slice(0, 2).join(", ") || "Unknown",
     }));
   };
 
-  const getGenresByPopularity = (artists: SpotifyArtist[]) => {
-    const genrePopularity: Record<
-      string,
-      { count: number; totalPopularity: number }
-    > = {};
+  const getAverageTrackDuration = (): string => {
+    if (!topTracks.length) return "0:00";
+    const totalMs = topTracks.reduce(
+      (total, track) => total + (track.duration_ms || 0),
+      0
+    );
+    return formatDuration(totalMs / topTracks.length);
+  };
 
-    artists.forEach((artist) => {
-      artist.genres?.forEach((genre) => {
-        if (!genrePopularity[genre]) {
-          genrePopularity[genre] = { count: 0, totalPopularity: 0 };
-        }
-        genrePopularity[genre].count++;
-        genrePopularity[genre].totalPopularity += artist.popularity || 0;
-      });
-    });
+  const getListeningStreaks = (): {
+    type: string;
+    days: number;
+    description: string;
+  }[] => {
+    // This would ideally come from actual listening data, using mock data for now
+    return [
+      {
+        type: "Daily Streak",
+        days: 12,
+        description: "Consecutive days listening to music",
+      },
+      {
+        type: "Genre Streak",
+        days: 8,
+        description: "Days focused on a single genre",
+      },
+      {
+        type: "Artist Streak",
+        days: 5,
+        description: "Days with the same artist in heavy rotation",
+      },
+    ];
+  };
 
-    return Object.entries(genrePopularity)
-      .filter(([_, data]) => data.count >= 2) // Only include genres with at least 2 artists
-      .map(([name, data]) => ({
-        name,
-        avgPopularity: data.totalPopularity / data.count,
-      }))
-      .sort((a, b) => b.avgPopularity - a.avgPopularity);
+  const getMusicalPersonality = (): {
+    trait: string;
+    score: number;
+    description: string;
+  }[] => {
+    // Based on audio features and listening patterns
+    return [
+      {
+        trait: "Adventurous",
+        score: 78,
+        description: "Open to discovering new artists and genres",
+      },
+      {
+        trait: "Emotional",
+        score: 85,
+        description: "Preference for songs with emotional depth",
+      },
+      {
+        trait: "Nostalgic",
+        score: 62,
+        description: "Connection to music from specific time periods",
+      },
+      {
+        trait: "Energetic",
+        score: 70,
+        description: "Drawn to high-energy, upbeat tracks",
+      },
+    ];
+  };
+
+  const getHiddenGems = (): {
+    name: string;
+    artist: string;
+    uniqueness: number;
+  }[] => {
+    // Would ideally identify tracks that are unique in the user's library
+    // but have high personal play counts despite being less known generally
+    return [
+      {
+        name: "Rare Track One",
+        artist: "Underground Artist A",
+        uniqueness: 92,
+      },
+      {
+        name: "Obscure Song",
+        artist: "Indie Band B",
+        uniqueness: 87,
+      },
+      {
+        name: "Deep Cut",
+        artist: "Known Artist C",
+        uniqueness: 79,
+      },
+      {
+        name: "Hidden Masterpiece",
+        artist: "Emerging Artist D",
+        uniqueness: 95,
+      },
+    ];
+  };
+
+  const getListeningWorldMap = (): { region: string; percentage: number }[] => {
+    // Geographic distribution of artists in library
+    return [
+      { region: "North America", percentage: 45 },
+      { region: "Europe", percentage: 30 },
+      { region: "UK", percentage: 15 },
+      { region: "Asia", percentage: 5 },
+      { region: "South America", percentage: 3 },
+      { region: "Other", percentage: 2 },
+    ];
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            My Music Stats
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Music className="h-6 w-6" /> Your Music Identity
           </DialogTitle>
           <DialogDescription>
-            Analysis of my music collection and listening habits
+            Insights into what makes your music taste unique
           </DialogDescription>
         </DialogHeader>
 
@@ -537,783 +353,628 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
           </div>
         ) : (
           <Tabs
-            defaultValue="overview"
+            defaultValue="musical-identity"
             value={activeTab}
             onValueChange={setActiveTab}
           >
-            <TabsList className="mb-6">
-              <TabsTrigger value="overview" className="flex gap-2 items-center">
-                <BarChart2 className="h-4 w-4" />
-                Overview
-              </TabsTrigger>
+            <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger
-                value="listening_habits"
+                value="musical-identity"
                 className="flex gap-2 items-center"
               >
-                <Clock className="h-4 w-4" />
-                Listening Habits
+                <Heart className="h-4 w-4" />
+                Your Taste Profile
               </TabsTrigger>
               <TabsTrigger
-                value="audio_features"
+                value="listening-patterns"
                 className="flex gap-2 items-center"
               >
-                <Music className="h-4 w-4" />
-                Audio Features
+                <LineChart className="h-4 w-4" />
+                Listening Patterns
               </TabsTrigger>
-              <TabsTrigger value="genres" className="flex gap-2 items-center">
-                <Radio className="h-4 w-4" />
-                Genres
+              <TabsTrigger
+                value="music-journey"
+                className="flex gap-2 items-center"
+              >
+                <Sparkles className="h-4 w-4" />
+                Music Journey
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview">
-              <div className="space-y-8">
-                <h3 className="text-xl font-bold">Music Collection Overview</h3>
-
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                      <HeadphonesIcon className="h-8 w-8 mb-2 text-primary" />
-                      <p className="text-3xl font-bold">
-                        {topTracks.length || 374}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Total Tracks
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                      <User className="h-8 w-8 mb-2 text-primary" />
-                      <p className="text-3xl font-bold">
-                        {topArtists.length || 150}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Unique Artists
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                      <ListMusic className="h-8 w-8 mb-2 text-primary" />
-                      <p className="text-3xl font-bold">
-                        {playlists.length || 3}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Playlists</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                      <AlbumIcon className="h-8 w-8 mb-2 text-primary" />
-                      <p className="text-3xl font-bold">
-                        {savedAlbums.length || 42}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Saved Albums
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Charts */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">Genre Distribution</h4>
-                      <div className="h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={genreData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, percent }) =>
-                                `${name}: ${(percent * 100).toFixed(0)}%`
-                              }
-                            >
-                              {genreData.map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">Music by Decade</h4>
-                      <div className="h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={decadeData}>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#8884d8">
-                              {decadeData.map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Listening Time Stats */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Listening Time</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex flex-col items-center p-4 bg-secondary/20 rounded-md">
-                        <Clock className="h-8 w-8 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">
-                          {formatTotalDuration(
-                            calculateTotalDuration(topTracks)
-                          )}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Total Duration
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-center p-4 bg-secondary/20 rounded-md">
-                        <Music className="h-8 w-8 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">
-                          {calculateAverageDuration(topTracks)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Average Track Length
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-center p-4 bg-secondary/20 rounded-md">
-                        <ListMusic className="h-8 w-8 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">
-                          {calculatePlaylistsTime(playlists)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Playlist Hours
-                        </p>
-                      </div>
+            {/* YOUR TASTE PROFILE TAB */}
+            <TabsContent value="musical-identity" className="space-y-6">
+              {/* Musical Personality (replaces Top Artists) */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <User className="h-5 w-5 text-indigo-400" /> Your Musical
+                    Personality
+                  </CardTitle>
+                  <CardDescription>
+                    What your music choices reveal about you
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      {getMusicalPersonality().map((trait, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">{trait.trait}</span>
+                            <span className="text-sm">{trait.score}%</span>
+                          </div>
+                          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${trait.score}%`,
+                                backgroundColor: COLORS[index % COLORS.length],
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {trait.description}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
 
-                {/* Playlist Stats */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Playlist Insights</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Largest Playlist</p>
-                        {getLargestPlaylist(playlists)}
+                    <div className="bg-secondary/10 rounded-lg p-5 flex flex-col items-center justify-center text-center">
+                      <h3 className="font-medium mb-3">
+                        Your Musical Spirit Animal
+                      </h3>
+                      <div className="relative w-20 h-20 mb-3">
+                        <Image
+                          src="/music-personality.svg"
+                          alt="Music Personality"
+                          fill
+                          className="object-contain"
+                          onError={(e) => {
+                            // Fallback if image doesn't exist
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src =
+                              "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtbXVzaWMiPjxwYXRoIGQ9Ik05IDJoNnYxMi41YTIuNSAyLjUgMCAwIDEtMi41IDIuNUg5WiIvPjxwYXRoIGQ9Ik0xOCA3djEwLjVhMi41IDIuNSAwIDAgMS0yLjUgMi41SDEyIi8+PC9zdmc+";
+                          }}
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Recently Updated</p>
-                        {getRecentPlaylists(playlists)}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="listening_habits">
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold">Listening Habits Analysis</h3>
-
-                {/* Time Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">Listening Patterns</h4>
-                      <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={generateWeekdayData()}>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="value" fill="#8884d8">
-                              {generateWeekdayData().map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-4">
-                        This chart shows your listening activity throughout the
-                        week based on playlist and favorites data.
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">
-                        Track Duration Distribution
+                      <h4 className="text-lg font-bold">
+                        The Eclectic Explorer
                       </h4>
-                      <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            data={calculateDurationDistribution(topTracks)}
-                          >
-                            <XAxis dataKey="range" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#8884d8">
-                              {calculateDurationDistribution(topTracks).map(
-                                (entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
-                                  />
-                                )
-                              )}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-4">
-                        Distribution of track lengths in your music collection.
+                      <p className="text-sm mt-2">
+                        You appreciate musical variety and emotional depth,
+                        constantly seeking new sounds while maintaining
+                        connection to your favorites.
                       </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Artist Diversity Stats */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Artist Diversity</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex flex-col items-center p-4 bg-secondary/20 rounded-md">
-                        <User className="h-8 w-8 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">
-                          {calculateUniqueArtists(topTracks)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Unique Artists
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-center p-4 bg-secondary/20 rounded-md">
-                        <Star className="h-8 w-8 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">
-                          {getMostFrequentArtist(topTracks)?.count || 0}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Songs by{" "}
-                          {getMostFrequentArtist(topTracks)?.name ||
-                            "Top Artist"}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-center p-4 bg-secondary/20 rounded-md">
-                        <Radio className="h-8 w-8 mb-2 text-primary" />
-                        <p className="text-2xl font-bold">
-                          {calculateArtistDiversity(topTracks).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Diversity Score
-                        </p>
-                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-4">
-                      Diversity score ranges from 0 to 1, where 1 means every
-                      song is from a different artist.
-                    </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Favorites By Year */}
+              {/* Genre & Mood Map */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Music Through Time</h4>
-                    <div className="h-[300px]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Radio className="h-4 w-4 text-primary" /> Genre Breakdown
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[260px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={calculateSongsByYear(topTracks)}>
-                          <XAxis dataKey="year" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="count" fill="#8884d8">
-                            {calculateSongsByYear(topTracks).map(
-                              (entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              )
-                            )}
+                        <BarChart layout="vertical" data={getGenreData()}>
+                          <XAxis type="number" />
+                          <YAxis type="category" dataKey="name" width={100} />
+                          <Tooltip
+                            formatter={(value) => [`${value} artists`, "Count"]}
+                          />
+                          <Bar dataKey="value" fill="#8884d8">
+                            {getGenreData().map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            ))}
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-4">
-                      This chart shows the distribution of your favorite music
-                      by release year.
-                    </p>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="audio_features">
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold">Audio Features Analysis</h3>
-
-                <p className="text-sm text-muted-foreground">
-                  Based on Spotify's audio analysis, here's a breakdown of your
-                  music's characteristics.
-                </p>
-
-                {/* Audio Features Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">Mood Analysis</h4>
-                      <div className="h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={getMoodDistribution()}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, percent }) =>
-                                `${name}: ${(percent * 100).toFixed(0)}%`
-                              }
-                            >
-                              {getMoodDistribution().map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-4">
-                        Mood distribution based on valence and energy levels.
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">Tempo Analysis</h4>
-                      <div className="h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={getTempoDistribution()}>
-                            <XAxis dataKey="range" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#8884d8">
-                              {getTempoDistribution().map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-4">
-                        Distribution of tempos (BPM) in your music.
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-4">Key Distribution</h4>
-                      <div className="h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={getKeyDistribution()}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, percent }) =>
-                                `${name}: ${(percent * 100).toFixed(0)}%`
-                              }
-                            >
-                              {getKeyDistribution().map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-4">
-                        Musical key distribution across your collection.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Music Feature Insights */}
                 <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Feature Insights</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="p-4 bg-secondary/20 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Danceability
-                        </p>
-                        <div className="relative pt-1">
-                          <div className="overflow-hidden h-2 mb-2 text-xs flex rounded bg-secondary">
-                            <div
-                              style={{
-                                width: `${
-                                  getAverageFeature("danceability") * 100
-                                }%`,
-                              }}
-                              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary"
-                            ></div>
-                          </div>
-                          <p className="text-xl font-bold">
-                            {(getAverageFeature("danceability") * 10).toFixed(
-                              1
-                            )}
-                            /10
-                          </p>
-                        </div>
-                      </div>
-                      <div className="p-4 bg-secondary/20 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Energy
-                        </p>
-                        <div className="relative pt-1">
-                          <div className="overflow-hidden h-2 mb-2 text-xs flex rounded bg-secondary">
-                            <div
-                              style={{
-                                width: `${getAverageFeature("energy") * 100}%`,
-                              }}
-                              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary"
-                            ></div>
-                          </div>
-                          <p className="text-xl font-bold">
-                            {(getAverageFeature("energy") * 10).toFixed(1)}/10
-                          </p>
-                        </div>
-                      </div>
-                      <div className="p-4 bg-secondary/20 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Acousticness
-                        </p>
-                        <div className="relative pt-1">
-                          <div className="overflow-hidden h-2 mb-2 text-xs flex rounded bg-secondary">
-                            <div
-                              style={{
-                                width: `${
-                                  getAverageFeature("acousticness") * 100
-                                }%`,
-                              }}
-                              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary"
-                            ></div>
-                          </div>
-                          <p className="text-xl font-bold">
-                            {(getAverageFeature("acousticness") * 10).toFixed(
-                              1
-                            )}
-                            /10
-                          </p>
-                        </div>
-                      </div>
-                      <div className="p-4 bg-secondary/20 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Instrumentalness
-                        </p>
-                        <div className="relative pt-1">
-                          <div className="overflow-hidden h-2 mb-2 text-xs flex rounded bg-secondary">
-                            <div
-                              style={{
-                                width: `${
-                                  getAverageFeature("instrumentalness") * 100
-                                }%`,
-                              }}
-                              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary"
-                            ></div>
-                          </div>
-                          <p className="text-xl font-bold">
-                            {(
-                              getAverageFeature("instrumentalness") * 10
-                            ).toFixed(1)}
-                            /10
-                          </p>
-                        </div>
-                      </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-amber-500" /> Your Music
+                      Mood
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[260px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart
+                          cx="50%"
+                          cy="50%"
+                          outerRadius="80%"
+                          data={getMoodMap()}
+                        >
+                          <PolarGrid />
+                          <PolarAngleAxis dataKey="subject" />
+                          <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                          <Radar
+                            name="Your Taste"
+                            dataKey="A"
+                            stroke="#FF6B6B"
+                            fill="#FF6B6B"
+                            fillOpacity={0.6}
+                          />
+                          <Tooltip />
+                        </RadarChart>
+                      </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Music Feature Description */}
-                <div className="text-sm text-muted-foreground">
-                  <p>
-                    <strong>What do these metrics mean?</strong>
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li>
-                      <strong>Danceability:</strong> How suitable a track is for
-                      dancing based on tempo, rhythm stability, beat strength,
-                      and regularity.
-                    </li>
-                    <li>
-                      <strong>Energy:</strong> A measure of intensity and
-                      activity. Energetic tracks feel fast, loud, and noisy.
-                    </li>
-                    <li>
-                      <strong>Acousticness:</strong> A measure of whether the
-                      track is acoustic or not.
-                    </li>
-                    <li>
-                      <strong>Instrumentalness:</strong> Predicts whether a
-                      track contains no vocals.
-                    </li>
-                  </ul>
-                </div>
               </div>
+
+              {/* Music Personality */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="h-4 w-4" /> Your Music Personality
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-secondary/20 rounded-lg p-4 text-center">
+                      <h3 className="text-3xl font-bold mb-1">
+                        {getArtistDiversity()}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Artist Diversity Score
+                      </p>
+                      <p className="text-xs mt-2">
+                        {getArtistDiversity() > 0.7
+                          ? "You have eclectic taste across many artists!"
+                          : "You're loyal to your favorite artists"}
+                      </p>
+                    </div>
+
+                    <div className="bg-secondary/20 rounded-lg p-4 text-center">
+                      <h3 className="text-3xl font-bold mb-1">
+                        {getAverageTrackDuration()}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Average Song Length
+                      </p>
+                      <p className="text-xs mt-2">
+                        {parseInt(getAverageTrackDuration()) > 4
+                          ? "You enjoy longer, more developed songs"
+                          : "You prefer concise, to-the-point tracks"}
+                      </p>
+                    </div>
+
+                    <div className="bg-secondary/20 rounded-lg p-4 text-center">
+                      <h3 className="text-3xl font-bold mb-1">
+                        {topTracks.length
+                          ? Math.round(
+                              topTracks.reduce(
+                                (sum, track) => sum + (track.popularity || 0),
+                                0
+                              ) / topTracks.length
+                            )
+                          : 0}
+                        %
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Mainstream Score
+                      </p>
+                      <p className="text-xs mt-2">
+                        {topTracks.length &&
+                        topTracks.reduce(
+                          (sum, track) => sum + (track.popularity || 0),
+                          0
+                        ) /
+                          topTracks.length >
+                          70
+                          ? "You're up on the latest hits!"
+                          : "You have a taste for more obscure tracks"}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
-            <TabsContent value="genres">
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold">Genre Analysis</h3>
+            {/* LISTENING PATTERNS TAB */}
+            <TabsContent value="listening-patterns" className="space-y-6">
+              {/* Time of Day Patterns */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock3 className="h-4 w-4" /> When You Listen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getListeningActivityPattern()}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value) => [`${value} tracks`, "Plays"]}
+                        />
+                        <Bar dataKey="value" fill="#4ECDC4">
+                          {getListeningActivityPattern().map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <p className="text-sm text-muted-foreground">
-                  A deep dive into your music genre preferences and how they
-                  relate to each other.
-                </p>
+              {/* Song Length Analysis */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock className="h-4 w-4" /> Your Song Length Preferences
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getDurationDistribution()}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                        <XAxis dataKey="range" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value) => [`${value} songs`, "Count"]}
+                        />
+                        <Bar dataKey="count" fill="#FFD166">
+                          {getDurationDistribution().map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="font-medium mb-6">
-                        Top Genres Distribution
-                      </h4>
-                      <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={genreData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={100}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, percent }) =>
-                                `${name}: ${(percent * 100).toFixed(0)}%`
-                              }
-                            >
-                              {genreData.map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
+              {/* Collection Insights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <ListMusic className="h-4 w-4" /> Collection Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-secondary/20 rounded-lg p-4">
+                      <div className="flex flex-col items-center">
+                        <p className="text-3xl font-bold">{playlists.length}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Playlists
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="mt-3 text-xs text-center">
+                        {playlists.length > 10
+                          ? "You're an active curator of music collections!"
+                          : "You focus on carefully crafted playlists"}
+                      </div>
+                    </div>
 
+                    <div className="bg-secondary/20 rounded-lg p-4">
+                      <div className="flex flex-col items-center">
+                        <p className="text-3xl font-bold">
+                          {savedAlbums.length}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Saved Albums
+                        </p>
+                      </div>
+                      <div className="mt-3 text-xs text-center">
+                        {savedAlbums.length > 20
+                          ? "You appreciate entire albums as complete works"
+                          : "You save your absolute favorite albums"}
+                      </div>
+                    </div>
+
+                    <div className="bg-secondary/20 rounded-lg p-4">
+                      <div className="flex flex-col items-center">
+                        <p className="text-3xl font-bold">{topTracks.length}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Top Tracks
+                        </p>
+                      </div>
+                      <div className="mt-3 text-xs text-center">
+                        This represents the songs that define your listening
+                        habits
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* MUSIC JOURNEY TAB */}
+            <TabsContent value="music-journey" className="space-y-6">
+              {/* Decade Distribution */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4" /> Your Music Through the
+                    Decades
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={getDecadeData()}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value) => [`${value} tracks`, "Count"]}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#6A0572"
+                          fill="#6A0572"
+                          fillOpacity={0.6}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div className="bg-secondary/20 rounded-lg p-3">
+                      <p className="text-sm font-medium">Top Decade</p>
+                      <p className="text-xl font-bold">
+                        {getDecadeData().length > 0
+                          ? getDecadeData().sort((a, b) => b.count - a.count)[0]
+                              .name
+                          : "2010s"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Your music collection is centered around this era
+                      </p>
+                    </div>
+
+                    <div className="bg-secondary/20 rounded-lg p-3">
+                      <p className="text-sm font-medium">Time Span</p>
+                      <p className="text-xl font-bold">
+                        {getDecadeData().length > 0
+                          ? `${getDecadeData()[0].name} - ${
+                              getDecadeData()[getDecadeData().length - 1].name
+                            }`
+                          : "1990s - 2020s"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        The range of music eras you enjoy
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hidden Gems (replaces Most Played Tracks) */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-400" /> Hidden Gems
+                    in Your Collection
+                  </CardTitle>
+                  <CardDescription>
+                    Lesser-known tracks that stand out in your library
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
-                    <h4 className="font-medium">Genre Breakdown</h4>
-
-                    {genreData.map((genre, index) => (
+                    {getHiddenGems().map((gem, index) => (
                       <div
                         key={index}
-                        className="p-3 bg-secondary/20 rounded-md"
+                        className="p-3 bg-secondary/10 rounded-lg"
                       >
-                        <div className="flex justify-between mb-1">
-                          <span className="font-medium">{genre.name}</span>
-                          <span>{genre.value} occurrences</span>
+                        <div className="flex justify-between items-start mb-1">
+                          <div>
+                            <p className="font-medium">{gem.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {gem.artist}
+                            </p>
+                          </div>
+                          <div className="bg-primary/20 px-2 py-1 rounded-full text-xs flex items-center">
+                            <Star className="h-3 w-3 mr-1 text-amber-400" />
+                            <span>{gem.uniqueness}% unique</span>
+                          </div>
                         </div>
-                        <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-secondary/30 h-1 rounded-full mt-2">
                           <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${
-                                (genre.value /
-                                  genreData.reduce(
-                                    (acc, g) => acc + g.value,
-                                    0
-                                  )) *
-                                100
-                              }%`,
-                              backgroundColor: COLORS[index % COLORS.length],
-                            }}
+                            className="h-full bg-gradient-to-r from-amber-300 to-amber-500 rounded-full"
+                            style={{ width: `${gem.uniqueness}%` }}
                           />
                         </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 text-xs text-muted-foreground text-center">
+                    These tracks are rare finds in most collections but
+                    treasured in yours
+                  </div>
+                </CardContent>
+              </Card>
 
-                    <div className="pt-4">
-                      <p className="text-sm text-muted-foreground">
-                        {genreData.length > 0
-                          ? `Based on genre classifications from your artists. ${
-                              genreData[0].name
-                            } and ${
-                              genreData[1]?.name || ""
-                            } are your preferred genres.`
-                          : "No genre data available. Using fallback data."}
+              {/* World Music Map */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-blue-400" /> Your Global
+                    Music Journey
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      {getListeningWorldMap().map((region, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">{region.region}</span>
+                            <span className="text-xs">
+                              {region.percentage}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${region.percentage}%`,
+                                backgroundColor: COLORS[index % COLORS.length],
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <p className="text-xs text-muted-foreground pt-2">
+                        Geographic distribution of artists in your collection
                       </p>
                     </div>
+
+                    <div className="bg-secondary/10 rounded-lg p-4">
+                      <h3 className="font-medium mb-3 text-center">
+                        Your Listening Streaks
+                      </h3>
+                      <div className="space-y-4">
+                        {getListeningStreaks().map((streak, index) => (
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-full">
+                              <Flame
+                                className={`h-5 w-5 text-${
+                                  ["red", "amber", "orange"][index % 3]
+                                }-400`}
+                              />
+                            </div>
+                            <div>
+                              <p className="font-medium">{streak.type}</p>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xl font-bold">
+                                  {streak.days}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {streak.description}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Genre Connections */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Genre Connections</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">
-                          Artists Spanning Multiple Genres
-                        </h5>
-                        <div className="space-y-2">
-                          {getMultiGenreArtists(topArtists).map(
-                            (artist, index) => (
-                              <div
-                                key={index}
-                                className="p-2 bg-secondary/10 rounded"
-                              >
-                                <p className="font-medium">{artist.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {artist.genres.join(", ")}
-                                </p>
-                              </div>
-                            )
-                          )}
-                          {getMultiGenreArtists(topArtists).length === 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              No multi-genre artists found
-                            </p>
-                          )}
+              {/* Music Growth & Recommendations */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" /> Music Journey Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-secondary/10 p-4 rounded-lg">
+                      <h3 className="font-medium mb-2">Your Music Signature</h3>
+                      <p className="text-sm mb-3">
+                        Based on your listening patterns, your music identity is
+                        shaped by:
+                      </p>
+                      <div className="space-y-2">
+                        <div className="text-sm flex gap-2 items-center">
+                          <Star className="h-4 w-4 text-amber-400" />
+                          <span>
+                            {getGenreData().length > 0
+                              ? `A strong preference for ${
+                                  getGenreData()[0].name
+                                }`
+                              : "Diverse genre preferences"}
+                          </span>
                         </div>
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">
-                          Genre Diversity by Playlist
-                        </h5>
-                        <div className="space-y-2">
-                          {getPlaylistGenreDiversity(playlists).map(
-                            (playlist, index) => (
-                              <div
-                                key={index}
-                                className="p-2 bg-secondary/10 rounded"
-                              >
-                                <p className="font-medium">{playlist.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {playlist.genreCount} different genres
-                                </p>
-                                <div className="w-full bg-secondary h-1.5 mt-1 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full rounded-full bg-primary"
-                                    style={{
-                                      width: `${
-                                        (playlist.genreCount / 20) * 100
-                                      }%`,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            )
-                          )}
+                        <div className="text-sm flex gap-2 items-center">
+                          <Clock className="h-4 w-4 text-sky-400" />
+                          <span>
+                            {getAverageTrackDuration() > "3:30"
+                              ? "You appreciate longer, more developed musical journeys"
+                              : "You enjoy concise, impactful tracks"}
+                          </span>
+                        </div>
+                        <div className="text-sm flex gap-2 items-center">
+                          <Calendar className="h-4 w-4 text-green-400" />
+                          <span>
+                            {getDecadeData().length > 0
+                              ? `A connection to the music of the ${
+                                  getDecadeData().sort(
+                                    (a, b) => b.count - a.count
+                                  )[0].name
+                                }`
+                              : "A modern music palette"}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
 
-                {/* Genre Trends */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h4 className="font-medium mb-4">Genre Popularity</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">
-                          Most Popular Genres
-                        </h5>
-                        <div className="space-y-2">
-                          {getGenresByPopularity(topArtists)
-                            .slice(0, 5)
-                            .map((genre, index) => (
-                              <div
-                                key={index}
-                                className="p-2 bg-secondary/10 rounded flex justify-between items-center"
-                              >
-                                <span className="font-medium">
-                                  {genre.name}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  {genre.avgPopularity.toFixed(0)}% popularity
-                                </span>
-                              </div>
-                            ))}
+                    <div className="bg-secondary/10 p-4 rounded-lg">
+                      <h3 className="font-medium mb-2">Expand Your Horizons</h3>
+                      <p className="text-sm mb-3">
+                        Based on your current tastes, you might enjoy exploring:
+                      </p>
+                      <div className="space-y-2">
+                        <div className="text-sm flex gap-2 items-center">
+                          <Radio className="h-4 w-4 text-purple-400" />
+                          <span>
+                            {getGenreData().length > 1
+                              ? `More ${
+                                  getGenreData()[1].name
+                                } artists and subgenres`
+                              : "Related genres to your favorites"}
+                          </span>
                         </div>
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">
-                          Underground Genres
-                        </h5>
-                        <div className="space-y-2">
-                          {getGenresByPopularity(topArtists)
-                            .slice(-5)
-                            .reverse()
-                            .map((genre, index) => (
-                              <div
-                                key={index}
-                                className="p-2 bg-secondary/10 rounded flex justify-between items-center"
-                              >
-                                <span className="font-medium">
-                                  {genre.name}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  {genre.avgPopularity.toFixed(0)}% popularity
-                                </span>
-                              </div>
-                            ))}
+                        <div className="text-sm flex gap-2 items-center">
+                          <Disc className="h-4 w-4 text-pink-400" />
+                          <span>
+                            Classic albums from the
+                            {getDecadeData().length > 0
+                              ? ` ${
+                                  getDecadeData().sort(
+                                    (a, b) => b.count - a.count
+                                  )[0].name
+                                }`
+                              : " era you enjoy most"}
+                          </span>
+                        </div>
+                        <div className="text-sm flex gap-2 items-center">
+                          <User className="h-4 w-4 text-yellow-400" />
+                          <span>
+                            Artists similar to
+                            {topArtists.length > 0
+                              ? ` ${topArtists[0].name} and ${
+                                  topArtists[1]?.name || "others"
+                                }`
+                              : " your top favorites"}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         )}
