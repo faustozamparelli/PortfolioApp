@@ -80,11 +80,8 @@ export interface SpotifyAlbum {
 // Interface for music collection entry - similar to your Movie interface
 export interface MusicItem {
   spotifyUrl: string;
-  type: "track" | "album" | "artist" | "playlist";
   rating: number; // 0-10 with one decimal
   review?: string;
-  isFavorite?: boolean;
-  rank?: number; // Ranking position for favorite artists
   // These fields will be populated by the Spotify API
   name?: string;
   artists?: string[];
@@ -250,7 +247,6 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
-              type: "track",
               rating: 0,
               name: data.name,
               artists: data.artists.map((a: any) => a.name),
@@ -269,7 +265,6 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
-              type: "album",
               rating: 0,
               name: data.name,
               artists: data.artists.map((a: any) => a.name),
@@ -289,7 +284,6 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
-              type: "artist",
               rating: 0,
               name: data.name,
               coverUrl: data.images[0]?.url,
@@ -306,7 +300,6 @@ export async function getMusicDetailsFromSpotifyUrl(
 
             return {
               spotifyUrl,
-              type: "playlist",
               rating: 0,
               name: data.name,
               coverUrl: data.images[0]?.url,
@@ -331,7 +324,6 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (track) {
         return {
           spotifyUrl: track.external_urls.spotify,
-          type: "track",
           rating: 0,
           name: track.name,
           artists: track.artists.map((a) => a.name),
@@ -350,7 +342,6 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (album) {
         return {
           spotifyUrl: album.external_urls.spotify,
-          type: "album",
           rating: 0,
           name: album.name,
           artists: album.artists.map((a) => a.name),
@@ -370,7 +361,6 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (artist) {
         return {
           spotifyUrl: artist.external_urls.spotify,
-          type: "artist",
           rating: 0,
           name: artist.name,
           coverUrl: artist.images[0].url,
@@ -387,7 +377,6 @@ export async function getMusicDetailsFromSpotifyUrl(
       if (playlist) {
         return {
           spotifyUrl: playlist.external_urls.spotify,
-          type: "playlist",
           rating: 0,
           name: playlist.name,
           coverUrl: playlist.images[0].url,
@@ -397,7 +386,6 @@ export async function getMusicDetailsFromSpotifyUrl(
         // Create a placeholder for playlists not found in sample data
         return {
           spotifyUrl,
-          type: "playlist",
           rating: 0,
           name: `Playlist (ID: ${id.substring(0, 6)}...)`,
           coverUrl: "/placeholder.svg",
@@ -410,7 +398,6 @@ export async function getMusicDetailsFromSpotifyUrl(
     // Return a placeholder item as a fallback
     return {
       spotifyUrl,
-      type: type as "track" | "album" | "artist" | "playlist",
       rating: 0,
       name: `${
         type.charAt(0).toUpperCase() + type.slice(1)
@@ -949,24 +936,38 @@ export async function getPlaylistById(
   try {
     if (!id) return null;
 
-    const endpoint = `/playlists/${id}`;
     const accessToken = await getAccessToken();
-
     if (!accessToken) {
       console.warn("No access token available");
       return null;
     }
 
     try {
-      // First get the playlist information
+      // Get initial playlist data
+      const endpoint = `/playlists/${id}`;
       const playlist = await spotifyApiRequest(endpoint, accessToken);
 
-      // If there are more than 100 tracks, we need to fetch them all with pagination
-      if (playlist.tracks && playlist.tracks.total > 100) {
-        const allTracks = await getAllPlaylistTracks(id, accessToken);
-        if (allTracks.length > 0) {
-          playlist.tracks.items = allTracks;
+      // Check if we need to fetch more tracks
+      if (playlist.tracks.total > playlist.tracks.items.length) {
+        console.log(
+          `Playlist has ${playlist.tracks.total} tracks but only ${playlist.tracks.items.length} loaded. Fetching all...`
+        );
+
+        // Fetch all remaining tracks using pagination
+        const allTracks = [...playlist.tracks.items];
+        let nextUrl = playlist.tracks.next;
+
+        while (nextUrl) {
+          const trackResponse = await spotifyApiRequest(nextUrl, accessToken);
+          allTracks.push(...trackResponse.items);
+          nextUrl = trackResponse.next;
         }
+
+        // Replace the tracks in the playlist object
+        playlist.tracks.items = allTracks;
+        console.log(
+          `Successfully loaded all ${allTracks.length} tracks for playlist`
+        );
       }
 
       return playlist;
@@ -977,43 +978,5 @@ export async function getPlaylistById(
   } catch (error) {
     console.error("Error in getPlaylistById:", error);
     return null;
-  }
-}
-
-// Fetches all tracks from a playlist with pagination
-async function getAllPlaylistTracks(
-  playlistId: string,
-  accessToken: string
-): Promise<any[]> {
-  try {
-    const limit = 100; // Maximum allowed by Spotify API
-    const tracks: any[] = [];
-    let offset = 0;
-    let total = 1; // Start with a non-zero value, will be updated after first request
-
-    // Keep fetching until we've got all tracks
-    while (offset < total) {
-      const endpoint = `/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`;
-      const response = await spotifyApiRequest(endpoint, accessToken);
-
-      if (!response || !response.items) {
-        break;
-      }
-
-      // Add the current batch of tracks
-      tracks.push(...response.items);
-
-      // Update total and offset for next batch
-      total = response.total;
-      offset += limit;
-    }
-
-    console.log(
-      `Fetched all ${tracks.length} tracks for playlist ${playlistId}`
-    );
-    return tracks;
-  } catch (error) {
-    console.error("Error fetching all playlist tracks:", error);
-    return [];
   }
 }
