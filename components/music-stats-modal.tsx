@@ -423,21 +423,6 @@ export function MusicStatsModal({ isOpen, onClose }: MusicStatsModalProps) {
                       <h3 className="font-medium mb-3">
                         Your Musical Spirit Animal
                       </h3>
-                      <div className="relative w-20 h-20 mb-3">
-                        <Image
-                          src="/music-personality.svg"
-                          alt="Music Personality"
-                          fill
-                          className="object-contain"
-                          onError={(e) => {
-                            // Fallback if image doesn't exist
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null;
-                            target.src =
-                              "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtbXVzaWMiPjxwYXRoIGQ9Ik05IDJoNnYxMi41YTIuNSAyLjUgMCAwIDEtMi41IDIuNUg5WiIvPjxwYXRoIGQ9Ik0xOCA3djEwLjVhMi41IDIuNSAwIDAgMS0yLjUgMi41SDEyIi8+PC9zdmc+";
-                          }}
-                        />
-                      </div>
                       <h4 className="text-lg font-bold">
                         The Eclectic Explorer
                       </h4>

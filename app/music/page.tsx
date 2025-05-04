@@ -336,28 +336,15 @@ export default function MusicPage() {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch details for favorite artists
-        const updatedFavoriteArtists = await Promise.all(
-          favoriteArtists.map(async (item) => {
-            try {
-              const musicDetails = await getMusicDetailsFromSpotifyUrl(
-                item.spotifyUrl
-              );
-              if (musicDetails) {
-                return {
-                  ...item,
-                  name: musicDetails.name || item.spotifyUrl,
-                  coverUrl: musicDetails.coverUrl || "/placeholder.svg",
-                  genres: musicDetails.genres || [],
-                  popularity: musicDetails.popularity || 0,
-                };
-              }
-            } catch (err) {
-              console.error("Error fetching artist details:", err);
-            }
-            return item;
-          })
-        );
+        // No longer fetch details for favorite artists since we don't display them
+        // Use static data for artists instead
+        const updatedFavoriteArtists = favoriteArtists.map((item) => ({
+          ...item,
+          name: item.name || item.spotifyUrl,
+          coverUrl: item.coverUrl || "/placeholder.svg",
+          genres: item.genres || [],
+          popularity: item.popularity || 0,
+        }));
 
         // Try to fetch the BEST (4)EVER playlist first
         let bestEverTracksFormatted = [] as SpotifyTrack[];
@@ -536,7 +523,7 @@ export default function MusicPage() {
       )}
 
       {/* Quick Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <Card>
           <CardContent className="flex items-center justify-between p-6">
             <div>
@@ -546,18 +533,6 @@ export default function MusicPage() {
               <p className="text-3xl font-bold">{totalSongs}</p>
             </div>
             <Music className="h-8 w-8 text-muted-foreground opacity-80" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Favorite Artists
-              </p>
-              <p className="text-3xl font-bold">{totalArtists}</p>
-            </div>
-            <User className="h-8 w-8 text-muted-foreground opacity-80" />
           </CardContent>
         </Card>
 
