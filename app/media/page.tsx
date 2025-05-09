@@ -787,6 +787,191 @@ const movies: Movie[] = [
     rating: 7,
     review: "",
   },
+  { imdbUrl: "https://www.imdb.com/title/tt0166813/", rating: 0, review: "" }, // Spirit: Stallion of the Cimarron
+  { imdbUrl: "https://www.imdb.com/title/tt0475293/", rating: 0, review: "" }, // High School Musical
+  { imdbUrl: "https://www.imdb.com/title/tt0126029/", rating: 0, review: "" }, // Shrek
+  { imdbUrl: "https://www.imdb.com/title/tt0046705/", rating: 0, review: "" }, // An American in Rome
+  { imdbUrl: "https://www.imdb.com/title/tt0298148/", rating: 0, review: "" }, // Shrek II
+  { imdbUrl: "https://www.imdb.com/title/tt0448694/", rating: 0, review: "" }, // Puss in Boots
+  { imdbUrl: "https://www.imdb.com/title/tt3915174/", rating: 0, review: "" }, // Puss in Boots: The Last Wish
+  { imdbUrl: "https://www.imdb.com/title/tt0103639/", rating: 0, review: "" }, // Aladin
+  { imdbUrl: "https://www.imdb.com/title/tt0120762/", rating: 0, review: "" }, // Mulan
+  { imdbUrl: "https://www.imdb.com/title/tt0398286/", rating: 0, review: "" }, // Tangled
+  { imdbUrl: "https://www.imdb.com/title/tt0119654/", rating: 0, review: "" }, // Men in Black
+  { imdbUrl: "https://www.imdb.com/title/tt0480249/", rating: 0, review: "" }, // I Am Legend
+  { imdbUrl: "https://www.imdb.com/title/tt0241527/", rating: 0, review: "" }, // Harry Potter and the Sorcerer's Stone
+  { imdbUrl: "https://www.imdb.com/title/tt0295297/", rating: 0, review: "" }, // Harry Potter and the Chamber of Secrets
+  { imdbUrl: "https://www.imdb.com/title/tt0304141/", rating: 0, review: "" }, // Harry Potter and the Prisoner of Azkaban
+  { imdbUrl: "https://www.imdb.com/title/tt0330373/", rating: 0, review: "" }, // Harry Potter and the Goblet of Fire
+  { imdbUrl: "https://www.imdb.com/title/tt0417741/", rating: 0, review: "" }, // Harry Potter and the Half-Blood Prince
+  { imdbUrl: "https://www.imdb.com/title/tt0926084/", rating: 0, review: "" }, // Harry Potter and the Deathly Hallows – Part 1
+  { imdbUrl: "https://www.imdb.com/title/tt1201607/", rating: 0, review: "" }, // Harry Potter and the Deathly Hallows – Part 2
+  { imdbUrl: "https://www.imdb.com/title/tt0448157/", rating: 0, review: "" }, // Hancock
+  { imdbUrl: "https://www.imdb.com/title/tt0454921/", rating: 0, review: "" }, // The Pursuit of Happyness
+  { imdbUrl: "https://www.imdb.com/title/tt0814314/", rating: 0, review: "" }, // Seven Pounds
+  { imdbUrl: "https://www.imdb.com/title/tt1502397/", rating: 0, review: "" }, // Bad Boys for Life
+  { imdbUrl: "https://www.imdb.com/title/tt1211837/", rating: 0, review: "" }, // Doctor Strange
+  { imdbUrl: "https://www.imdb.com/title/tt1213641/", rating: 0, review: "" }, // First Man
+  { imdbUrl: "https://www.imdb.com/title/tt0780504/", rating: 0, review: "" }, // Drive
+  { imdbUrl: "https://www.imdb.com/title/tt2582802/", rating: 0, review: "" }, // Whiplash
+  { imdbUrl: "https://www.imdb.com/title/tt7293698/", rating: 0, review: "" }, // Breaking Two
+  { imdbUrl: "https://www.imdb.com/title/tt7775622/", rating: 0, review: "" }, // Free Solo
+  { imdbUrl: "https://www.imdb.com/title/tt4550098/", rating: 0, review: "" }, // Nocturnal Animals
+  { imdbUrl: "https://www.imdb.com/title/tt1817273/", rating: 0, review: "" }, // The Place Beyond the Pines
+  { imdbUrl: "https://www.imdb.com/title/tt0120667/", rating: 0, review: "" }, // Fantastic Four
+  { imdbUrl: "https://www.imdb.com/title/tt0338013/", rating: 0, review: "" }, // Eternal Sunshine of the Spotless Mind
+  { imdbUrl: "https://www.imdb.com/title/tt6751668/", rating: 0, review: "" }, // Parasite
+  { imdbUrl: "https://www.imdb.com/title/tt2278388/", rating: 0, review: "" }, // The Grand Budapest Hotel
+  { imdbUrl: "https://www.imdb.com/title/tt0993846/", rating: 0, review: "" }, // The Wolf of Wall Street
+  { imdbUrl: "https://www.imdb.com/title/tt7322224/", rating: 0, review: "" }, // Triangle of Sadness
+  { imdbUrl: "https://www.imdb.com/title/tt7286456/", rating: 0, review: "" }, // Joker
+  { imdbUrl: "https://www.imdb.com/title/tt0099653/", rating: 0, review: "" }, // Ghost
+  { imdbUrl: "https://www.imdb.com/title/tt1424432/", rating: 0, review: "" }, // Senna
+  { imdbUrl: "https://www.imdb.com/title/tt0808279/", rating: 0, review: "" }, // Funny Games
+  { imdbUrl: "https://www.imdb.com/title/tt19801404/", rating: 0, review: "" }, // Untrapped: The Story of Lil Baby
+  { imdbUrl: "https://www.imdb.com/title/tt1659337/", rating: 0, review: "" }, // The Perks of Being a Wallflower
+  { imdbUrl: "https://www.imdb.com/title/tt0114369/", rating: 0, review: "" }, // Se7en
+  { imdbUrl: "https://www.imdb.com/title/tt0361748/", rating: 0, review: "" }, // Inglourious Basterds
+  { imdbUrl: "https://www.imdb.com/title/tt0113247/", rating: 0, review: "" }, // La Haine (L’odio)
+  { imdbUrl: "https://www.imdb.com/title/tt0947798/", rating: 0, review: "" }, // Black Swan
+  { imdbUrl: "https://www.imdb.com/title/tt4846232/", rating: 0, review: "" }, // Good Time
+  { imdbUrl: "https://www.imdb.com/title/tt1375666/", rating: 0, review: "" }, // Inception
+  { imdbUrl: "https://www.imdb.com/title/tt1130884/", rating: 0, review: "" }, // Shutter Island
+  { imdbUrl: "https://www.imdb.com/title/tt2693580/", rating: 0, review: "" }, // Miss Stevens
+  { imdbUrl: "https://www.imdb.com/title/tt16426418/", rating: 0, review: "" }, // Challengers
+  { imdbUrl: "https://www.imdb.com/title/tt5726616/", rating: 0, review: "" }, // Call Me by Your Name
+  { imdbUrl: "https://www.imdb.com/title/tt1120985/", rating: 0, review: "" }, // Blue Valentine
+  { imdbUrl: "https://www.imdb.com/title/tt2267998/", rating: 0, review: "" }, // Gone Girl
+  { imdbUrl: "https://www.imdb.com/title/tt4537896/", rating: 0, review: "" }, // White Boy Rick
+  { imdbUrl: "https://www.imdb.com/title/tt14230458/", rating: 0, review: "" }, // Poor Things
+  { imdbUrl: "https://www.imdb.com/title/tt4516162/", rating: 0, review: "" }, // Martin Eden
+  { imdbUrl: "https://www.imdb.com/title/tt0272338/", rating: 0, review: "" }, // Punch-Drunk Love
+  { imdbUrl: "https://www.imdb.com/title/tt9764362/", rating: 0, review: "" }, // The Menu
+  { imdbUrl: "https://www.imdb.com/title/tt0364569/", rating: 0, review: "" }, // Oldboy
+  { imdbUrl: "https://www.imdb.com/title/tt5247192/", rating: 0, review: "" }, // Piuma (2016)
+  { imdbUrl: "https://www.imdb.com/title/tt1877830/", rating: 0, review: "" }, // The Batman (2022)
+  { imdbUrl: "https://www.imdb.com/title/tt0468569/", rating: 0, review: "" }, // The Dark Knight
+  { imdbUrl: "https://www.imdb.com/title/tt0119217/", rating: 0, review: "" }, // Good Will Hunting
+  { imdbUrl: "https://www.imdb.com/title/tt1821597/", rating: 0, review: "" }, // Scialla – Stai Sereno
+  { imdbUrl: "https://www.imdb.com/title/tt0469494/", rating: 0, review: "" }, // There Will Be Blood
+  { imdbUrl: "https://www.imdb.com/title/tt10272386/", rating: 0, review: "" }, // The Father
+  { imdbUrl: "https://www.imdb.com/title/tt0264464/", rating: 0, review: "" }, // Catch Me If You Can
+  { imdbUrl: "https://www.imdb.com/title/tt0441773/", rating: 0, review: "" }, // Kung Fu Panda
+  { imdbUrl: "https://www.imdb.com/title/tt1022603/", rating: 0, review: "" }, // (500) Days of Summer
+  { imdbUrl: "https://www.imdb.com/title/tt0066921/", rating: 0, review: "" }, // A Clockwork Orange
+  { imdbUrl: "https://www.imdb.com/title/tt0118694/", rating: 0, review: "" }, // In the Mood for Love
+  { imdbUrl: "https://www.imdb.com/title/tt4034228/", rating: 0, review: "" }, // Manchester by the Sea
+  { imdbUrl: "https://www.imdb.com/title/tt3031654/", rating: 0, review: "" }, // Ennio
+  { imdbUrl: "https://www.imdb.com/title/tt0081505/", rating: 0, review: "" }, // The Shining
+  { imdbUrl: "https://www.imdb.com/title/tt0054215/", rating: 0, review: "" }, // Psycho
+  { imdbUrl: "https://www.imdb.com/title/tt5715874/", rating: 0, review: "" }, // The Killing of a Sacred Deer
+  { imdbUrl: "https://www.imdb.com/title/tt4229236/", rating: 0, review: "" }, // Cobain: Montage of Heck
+  { imdbUrl: "https://www.imdb.com/title/tt1226837/", rating: 0, review: "" }, // Beautiful Boy
+  { imdbUrl: "https://www.imdb.com/title/tt1798709/", rating: 0, review: "" }, // Her
+  { imdbUrl: "https://www.imdb.com/title/tt0075314/", rating: 0, review: "" }, // Taxi Driver
+  { imdbUrl: "https://www.imdb.com/title/tt1560747/", rating: 0, review: "" }, // The Master
+  { imdbUrl: "https://www.imdb.com/title/tt0367594/", rating: 0, review: "" }, // Charlie and the Chocolate Factory
+  { imdbUrl: "https://www.imdb.com/title/tt6166392/", rating: 0, review: "" }, // Wonka
+  { imdbUrl: "https://www.imdb.com/title/tt5363618/", rating: 0, review: "" }, // Sound of Metal
+  { imdbUrl: "https://www.imdb.com/title/tt3416536/", rating: 0, review: "" }, // Hot Summer Nights
+  { imdbUrl: "https://www.imdb.com/title/tt6212478/", rating: 0, review: "" }, // American Animals
+  { imdbUrl: "https://www.imdb.com/title/tt1100089/", rating: 0, review: "" }, // Foxcatcher
+  { imdbUrl: "https://www.imdb.com/title/tt12262116/", rating: 0, review: "" }, // Thirteen Lives
+  { imdbUrl: "https://www.imdb.com/title/tt0338751/", rating: 0, review: "" }, // The Aviator
+  { imdbUrl: "https://www.imdb.com/title/tt6966692/", rating: 0, review: "" }, // Green Book
+  { imdbUrl: "https://www.imdb.com/title/tt0407887/", rating: 0, review: "" }, // The Departed
+  { imdbUrl: "https://www.imdb.com/title/tt3152602/", rating: 0, review: "" }, // Il giovane favoloso
+  { imdbUrl: "https://www.imdb.com/title/tt5649144/", rating: 0, review: "" }, // The Florida Project
+  { imdbUrl: "https://www.imdb.com/title/tt3659388/", rating: 0, review: "" }, // The Martian
+  { imdbUrl: "https://www.imdb.com/title/tt6710474/", rating: 0, review: "" }, // Everything Everywhere All at Once
+  { imdbUrl: "https://www.imdb.com/title/tt13833688/", rating: 0, review: "" }, // The Whale
+  { imdbUrl: "https://www.imdb.com/title/tt13849558/", rating: 0, review: "" }, // Corner Office
+  { imdbUrl: "https://www.imdb.com/title/tt17526714/", rating: 0, review: "" }, // The Substance
+  { imdbUrl: "https://www.imdb.com/title/tt0052357/", rating: 0, review: "" }, // Vertigo
+  { imdbUrl: "https://www.imdb.com/title/tt0353969/", rating: 0, review: "" }, // Memories of Murder
+  { imdbUrl: "https://www.imdb.com/title/tt23468450/", rating: 0, review: "" }, // Longlegs
+  { imdbUrl: "https://www.imdb.com/title/tt7979142/", rating: 0, review: "" }, // The Night Clerk
+  { imdbUrl: "https://www.imdb.com/title/tt28607951/", rating: 0, review: "" }, // Anora
+  { imdbUrl: "https://www.imdb.com/title/tt1764234/", rating: 0, review: "" }, // Killing Them Softly
+  { imdbUrl: "https://www.imdb.com/title/tt4003440/", rating: 0, review: "" }, // The House That Jack Built
+  { imdbUrl: "https://www.imdb.com/title/tt4016934/", rating: 0, review: "" }, // The Handmaiden
+  { imdbUrl: "https://www.imdb.com/title/tt5040012/", rating: 0, review: "" }, // Nosferatu
+  { imdbUrl: "https://www.imdb.com/title/tt11563598/", rating: 0, review: "" }, // A Complete Unknown
+  { imdbUrl: "https://www.imdb.com/title/tt0209144/", rating: 0, review: "" }, // Memento
+  { imdbUrl: "https://www.imdb.com/title/tt0361862/", rating: 0, review: "" }, // The Machinist
+  { imdbUrl: "https://www.imdb.com/title/tt0278504/", rating: 0, review: "" }, // Insomnia
+  { imdbUrl: "https://www.imdb.com/title/tt7653254/", rating: 0, review: "" }, // A Marriage Story
+  { imdbUrl: "https://www.imdb.com/title/tt1568346/", rating: 0, review: "" }, // The Girl with the Dragon Tattoo
+  { imdbUrl: "https://www.imdb.com/title/tt0258000/", rating: 0, review: "" }, // Panic Room
+  { imdbUrl: "https://www.imdb.com/title/tt0327056/", rating: 0, review: "" }, // Mystic River
+  { imdbUrl: "https://www.imdb.com/title/tt1136617/", rating: 0, review: "" }, // The Killer
+  { imdbUrl: "https://www.imdb.com/title/tt12299608/", rating: 0, review: "" }, // Mikey 17
+  { imdbUrl: "https://www.imdb.com/title/tt0073582/", rating: 0, review: "" }, // Profondo Rosso
+  { imdbUrl: "https://www.imdb.com/title/tt1615147/", rating: 0, review: "" }, // Margin Call
+  { imdbUrl: "https://www.imdb.com/title/tt9660502/", rating: 0, review: "" }, // Close
+  { imdbUrl: "https://www.imdb.com/title/tt0245429/", rating: 0, review: "" }, // Spirited Away
+  { imdbUrl: "https://www.imdb.com/title/tt1504320/", rating: 0, review: "" }, // The King's Speech
+  { imdbUrl: "https://www.imdb.com/title/tt1375670/", rating: 0, review: "" }, // Grown Ups
+  { imdbUrl: "https://www.imdb.com/title/tt0389860/", rating: 0, review: "" }, // Click
+  { imdbUrl: "https://www.imdb.com/title/tt6700846/", rating: 0, review: "" }, // AlphaGo
+  { imdbUrl: "https://www.imdb.com/title/tt32150119/", rating: 0, review: "" }, // The Thinking Game
+  { imdbUrl: "https://www.imdb.com/title/tt0499549/", rating: 0, review: "" }, // Avatar
+  { imdbUrl: "https://www.imdb.com/title/tt1630029/", rating: 0, review: "" }, // Avatar: The Way of Water
+  { imdbUrl: "https://www.imdb.com/title/tt1229238/", rating: 0, review: "" }, // Mission Impossible: ghost protocol
+  { imdbUrl: "https://www.imdb.com/title/tt0317919/", rating: 0, review: "" }, // Mission Impossible III
+  { imdbUrl: "https://www.imdb.com/title/tt1517268/", rating: 0, review: "" }, // Barbie
+  { imdbUrl: "https://www.imdb.com/title/tt15398776/", rating: 0, review: "" }, // Oppenheimer
+  { imdbUrl: "https://www.imdb.com/title/tt0268978/", rating: 0, review: "" }, // A Beautiful Mind
+  { imdbUrl: "https://www.imdb.com/title/tt31193180/", rating: 0, review: "" }, // Sinners
+  { imdbUrl: "https://www.imdb.com/title/tt20215234/", rating: 0, review: "" }, // Conclave
+  { imdbUrl: "https://www.imdb.com/title/tt16968450/", rating: 0, review: "" }, // The Wonderful Story of Henry Sugar
+  { imdbUrl: "https://www.imdb.com/title/tt10168670/", rating: 0, review: "" }, // Bones and All
+  { imdbUrl: "https://www.imdb.com/title/tt14641542/", rating: 0, review: "" }, // The eight mountains
+  { imdbUrl: "https://www.imdb.com/title/tt3281548/", rating: 0, review: "" }, // Little Women
+  { imdbUrl: "https://www.imdb.com/title/tt4901306/", rating: 0, review: "" }, // Perfetti Sconosciuti
+  { imdbUrl: "https://www.imdb.com/title/tt3890160/", rating: 0, review: "" }, // Baby Driver
+  { imdbUrl: "https://www.imdb.com/title/tt0083658/", rating: 0, review: "" }, // Blade Runner
+  { imdbUrl: "https://www.imdb.com/title/tt1856101/", rating: 0, review: "" }, // Blade Runner 2049
+  { imdbUrl: "https://www.imdb.com/title/tt9495224/", rating: 0, review: "" }, // Bandersnatch
+  { imdbUrl: "https://www.imdb.com/title/tt4925292/", rating: 0, review: "" }, // Ladybird
+  { imdbUrl: "https://www.imdb.com/title/tt5052448/", rating: 0, review: "" }, // Get Out
+  { imdbUrl: "https://www.imdb.com/title/tt1392214/", rating: 0, review: "" }, // Prisoners
+  { imdbUrl: "https://www.imdb.com/title/tt0086250/", rating: 0, review: "" }, // Scarface
+  { imdbUrl: "https://www.imdb.com/title/tt0443706/", rating: 0, review: "" }, // Zodiac
+  { imdbUrl: "https://www.imdb.com/title/tt0166924/", rating: 0, review: "" }, // Mulholland Drive
+  { imdbUrl: "https://www.imdb.com/title/tt0144084/", rating: 0, review: "" }, // American Psycho
+  { imdbUrl: "https://www.imdb.com/title/tt0169547/", rating: 0, review: "" }, // American Beauty
+  { imdbUrl: "https://www.imdb.com/title/tt0062622/", rating: 0, review: "" }, // 2001: A Space Odyssey
+  { imdbUrl: "https://www.imdb.com/title/tt0078788/", rating: 0, review: "" }, // Apocalypse Now
+  { imdbUrl: "https://www.imdb.com/title/tt0137523/", rating: 0, review: "" }, // Fight Club
+  { imdbUrl: "https://www.imdb.com/title/tt0758758/", rating: 0, review: "" }, // Into the Wild
+  { imdbUrl: "https://www.imdb.com/title/tt0246578/", rating: 0, review: "" }, // Donnie Darko
+  { imdbUrl: "https://www.imdb.com/title/tt0099685/", rating: 0, review: "" }, // Goodfellas
+  { imdbUrl: "https://www.imdb.com/title/tt1302006/", rating: 0, review: "" }, // The Irishman
+  { imdbUrl: "https://www.imdb.com/title/tt17351924/", rating: 0, review: "" }, // Saltburn
+  { imdbUrl: "https://www.imdb.com/title/tt7160372/", rating: 0, review: "" }, // The Zone of Interest
+  { imdbUrl: "https://www.imdb.com/title/tt0914798/", rating: 0, review: "" }, // The Boy in the Striped Pajamas
+  { imdbUrl: "https://www.imdb.com/title/tt3464902/", rating: 0, review: "" }, // The Lobster
+  { imdbUrl: "https://www.imdb.com/title/tt1800241/", rating: 0, review: "" }, // American Hustle
+  { imdbUrl: "https://www.imdb.com/title/tt1979320/", rating: 0, review: "" }, // Rush
+  { imdbUrl: "https://www.imdb.com/title/tt2980516/", rating: 0, review: "" }, // The Theory of Everything
+  { imdbUrl: "https://www.imdb.com/title/tt2316411/", rating: 0, review: "" }, // Enemy
+  { imdbUrl: "https://www.imdb.com/title/tt3359350/", rating: 0, review: "" }, // Road House
+  { imdbUrl: "https://www.imdb.com/title/tt3881784/", rating: 0, review: "" }, // Stronger
+  { imdbUrl: "https://www.imdb.com/title/tt3967856/", rating: 0, review: "" }, // Okja
+  { imdbUrl: "https://www.imdb.com/title/tt1798684/", rating: 0, review: "" }, // Southpaw
+  { imdbUrl: "https://www.imdb.com/title/tt1855199/", rating: 0, review: "" }, // End of Watch
+  { imdbUrl: "https://www.imdb.com/title/tt0758752/", rating: 0, review: "" }, // Love & Other Drugs
+  { imdbUrl: "https://www.imdb.com/title/tt0945513/", rating: 0, review: "" }, // Source Code
+  { imdbUrl: "https://www.imdb.com/title/tt9421570/", rating: 0, review: "" }, // The Guilty
+  { imdbUrl: "https://www.imdb.com/title/tt0335266/", rating: 0, review: "" }, // Lost in Translation
+  { imdbUrl: "https://www.imdb.com/title/tt7131622/", rating: 0, review: "" }, // Once Upon a Time... in Hollywood
+  { imdbUrl: "https://www.imdb.com/title/tt1853728/", rating: 0, review: "" }, // Django Unchained
+  { imdbUrl: "https://www.imdb.com/title/tt0110912/", rating: 0, review: "" }, // Pulp Fiction
+  { imdbUrl: "https://www.imdb.com/title/tt0266697/", rating: 0, review: "" }, // Kill Bill: Vol. 1
+  { imdbUrl: "https://www.imdb.com/title/tt5013056/", rating: 0, review: "" }, // Dunkirk
+  { imdbUrl: "https://www.imdb.com/title/tt0482571/", rating: 0, review: "" }, // The Prestige
+  { imdbUrl: "https://www.imdb.com/title/tt1727824/", rating: 0, review: "" }, // Bohemian Rhapsody
 ];
 
 // Add your TV shows data here
@@ -848,6 +1033,12 @@ const shows: TVShow[] = [
     // Sex Education
     imdbUrl: "https://www.imdb.com/title/tt7767422/",
     rating: 5,
+    review: "",
+  },
+  {
+    // Mindhunter
+    imdbUrl: "https://www.imdb.com/title/tt5290382/",
+    rating: 6.5,
     review: "",
   },
   {
