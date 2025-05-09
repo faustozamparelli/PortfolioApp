@@ -972,6 +972,11 @@ const movies: Movie[] = [
   { imdbUrl: "https://www.imdb.com/title/tt5013056/", rating: 0, review: "" }, // Dunkirk
   { imdbUrl: "https://www.imdb.com/title/tt0482571/", rating: 0, review: "" }, // The Prestige
   { imdbUrl: "https://www.imdb.com/title/tt1727824/", rating: 0, review: "" }, // Bohemian Rhapsody
+  { imdbUrl: "https://www.imdb.com/title/tt8579674/", rating: 0, review: "" }, // 1917
+  { imdbUrl: "https://www.imdb.com/title/tt0133093/", rating: 0, review: "" }, // The Matrix
+  { imdbUrl: "https://www.imdb.com/title/tt0102926/", rating: 0, review: "" }, // The Silence of the Lambs
+  { imdbUrl: "https://www.imdb.com/title/tt1675434/", rating: 0, review: "" }, //The Intouchables
+  { imdbUrl: "https://www.imdb.com/title/tt1950186/", rating: 0, review: "" }, // Ford v Ferrari
 ];
 
 // Add your TV shows data here
