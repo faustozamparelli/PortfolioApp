@@ -791,7 +791,7 @@ const movies: Movie[] = [
     imdbUrl: "https://www.imdb.com/title/tt13652142/",
     rating: 9.2,
     review:
-      "Holy shit. This movie hits hard. Just imagine if The Joker and Whiplash had a baby,this is it. It left a mark on me during the fake gun scene in the car; it really gave me a perspective shift on how mass murders happen. If we truly put ourselves in the shoes of people in these positions, we can start to feel bad for them instead of just calling them monsters. I don’t feel like this is just another Taxi Driver spinoff. In my opinion, it has more. It has darkness mixed with humor, mixed with cringe, mixed with determination and obsession. I liked the ending, but I expected a little more from it. That’s why it’s not a 10, but it came really close.",
+      "Holy shit. This movie hits hard. Just imagine if The Joker and Whiplash had a baby,this is it. It left a mark on me during the fake gun scene in the car; it really gave me a perspective shift on how mass murders happen. If we truly put ourselves in the shoes of people in these positions, we can start to feel bad for them instead of just calling them monsters. I don't feel like this is just another Taxi Driver spinoff. In my opinion, it has more. It has darkness mixed with humor, mixed with cringe, mixed with determination and obsession. I liked the ending, but I expected a little more from it. That's why it's not a 10, but it came really close.",
   },
   {
     // On the count of three
@@ -844,7 +844,7 @@ const movies: Movie[] = [
   { imdbUrl: "https://www.imdb.com/title/tt1659337/", rating: 0, review: "" }, // The Perks of Being a Wallflower
   { imdbUrl: "https://www.imdb.com/title/tt0114369/", rating: 0, review: "" }, // Se7en
   { imdbUrl: "https://www.imdb.com/title/tt0361748/", rating: 0, review: "" }, // Inglourious Basterds
-  { imdbUrl: "https://www.imdb.com/title/tt0113247/", rating: 0, review: "" }, // La Haine (L’odio)
+  { imdbUrl: "https://www.imdb.com/title/tt0113247/", rating: 0, review: "" }, // La Haine (L'odio)
   { imdbUrl: "https://www.imdb.com/title/tt0947798/", rating: 0, review: "" }, // Black Swan
   { imdbUrl: "https://www.imdb.com/title/tt4846232/", rating: 0, review: "" }, // Good Time
   { imdbUrl: "https://www.imdb.com/title/tt1375666/", rating: 0, review: "" }, // Inception
@@ -1437,7 +1437,7 @@ export default function MediaPage() {
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-bold">All Movies</h2>
                       <div className="px-2 py-1 bg-muted rounded-md text-sm">
-                        {filteredMovies.length}
+                        {moviesWithPosters.length + topMoviesWithPosters.length}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1548,7 +1548,7 @@ export default function MediaPage() {
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-bold">All TV Shows</h2>
                       <div className="px-2 py-1 bg-muted rounded-md text-sm">
-                        {filteredShows.length}
+                        {showsWithPosters.length + topShowsWithPosters.length}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
