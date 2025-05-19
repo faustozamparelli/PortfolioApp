@@ -4,6 +4,27 @@ const TMDB_API_KEY = "1f54bd990f1cdfb230adb312546d765d"; // This is a public API
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
+// Add retry mechanism
+async function fetchWithRetry(
+  url: string,
+  retries = 3,
+  delay = 1000
+): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
+    }
+  }
+  throw new Error("Max retries reached");
+}
+
 interface MovieDetails {
   title: string;
   originalTitle: string;
@@ -30,7 +51,7 @@ export async function getMoviePoster(
     const searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
       title
     )}${year ? `&year=${year}` : ""}`;
-    const searchResponse = await fetch(searchUrl);
+    const searchResponse = await fetchWithRetry(searchUrl);
     const searchData = await searchResponse.json();
 
     if (searchData.results && searchData.results.length > 0) {
@@ -57,7 +78,7 @@ export async function getMovieDetails(
     const searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
       title
     )}${year ? `&year=${year}` : ""}`;
-    const searchResponse = await fetch(searchUrl);
+    const searchResponse = await fetchWithRetry(searchUrl);
     const searchData = await searchResponse.json();
 
     if (searchData.results && searchData.results.length > 0) {
@@ -66,7 +87,7 @@ export async function getMovieDetails(
 
       // Get additional details
       const detailsUrl = `${TMDB_BASE_URL}/movie/${movie.id}?api_key=${TMDB_API_KEY}&append_to_response=credits`;
-      const detailsResponse = await fetch(detailsUrl);
+      const detailsResponse = await fetchWithRetry(detailsUrl);
       const detailsData = await detailsResponse.json();
 
       // Get director from credits
@@ -122,7 +143,7 @@ export async function getMovieDetailsFromImdbUrl(
 
     // Search for the movie using IMDb ID
     const searchUrl = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-    const searchResponse = await fetch(searchUrl);
+    const searchResponse = await fetchWithRetry(searchUrl);
     const searchData = await searchResponse.json();
 
     if (searchData.movie_results && searchData.movie_results.length > 0) {
@@ -130,7 +151,7 @@ export async function getMovieDetailsFromImdbUrl(
 
       // Get additional details
       const detailsUrl = `${TMDB_BASE_URL}/movie/${movie.id}?api_key=${TMDB_API_KEY}&append_to_response=credits`;
-      const detailsResponse = await fetch(detailsUrl);
+      const detailsResponse = await fetchWithRetry(detailsUrl);
       const detailsData = await detailsResponse.json();
 
       // Get director from credits
