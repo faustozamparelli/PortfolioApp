@@ -269,6 +269,18 @@ const movies: Movie[] = [
     review: "",
   },
   {
+    // Freerunner
+    imdbUrl: "https://www.imdb.com/title/tt1579232/",
+    rating: 0,
+    review: "",
+  },
+  {
+    // Tracers
+    imdbUrl: "https://www.imdb.com/title/tt2401097/",
+    rating: 0,
+    review: "",
+  },
+  {
     // The Fox and the Hound
     imdbUrl: "https://www.imdb.com/title/tt0082406/",
     rating: 0,
@@ -827,6 +839,7 @@ const movies: Movie[] = [
   { imdbUrl: "https://www.imdb.com/title/tt0780504/", rating: 0, review: "" }, // Drive
   { imdbUrl: "https://www.imdb.com/title/tt2582802/", rating: 0, review: "" }, // Whiplash
   { imdbUrl: "https://www.imdb.com/title/tt7293698/", rating: 0, review: "" }, // Breaking Two
+  { imdbUrl: "https://www.imdb.com/title/tt0162222/", rating: 0, review: "" }, // Cast Away
   { imdbUrl: "https://www.imdb.com/title/tt7775622/", rating: 0, review: "" }, // Free Solo
   { imdbUrl: "https://www.imdb.com/title/tt4550098/", rating: 0, review: "" }, // Nocturnal Animals
   { imdbUrl: "https://www.imdb.com/title/tt1817273/", rating: 0, review: "" }, // The Place Beyond the Pines
@@ -839,6 +852,7 @@ const movies: Movie[] = [
   { imdbUrl: "https://www.imdb.com/title/tt7286456/", rating: 0, review: "" }, // Joker
   { imdbUrl: "https://www.imdb.com/title/tt0099653/", rating: 0, review: "" }, // Ghost
   { imdbUrl: "https://www.imdb.com/title/tt1424432/", rating: 0, review: "" }, // Senna
+  { imdbUrl: "https://www.imdb.com/title/tt5727282/", rating: 0, review: "" }, // Borg vs McEnroe
   { imdbUrl: "https://www.imdb.com/title/tt0808279/", rating: 0, review: "" }, // Funny Games
   { imdbUrl: "https://www.imdb.com/title/tt19801404/", rating: 0, review: "" }, // Untrapped: The Story of Lil Baby
   { imdbUrl: "https://www.imdb.com/title/tt1659337/", rating: 0, review: "" }, // The Perks of Being a Wallflower
@@ -958,6 +972,7 @@ const movies: Movie[] = [
   { imdbUrl: "https://www.imdb.com/title/tt0137523/", rating: 0, review: "" }, // Fight Club
   { imdbUrl: "https://www.imdb.com/title/tt0758758/", rating: 0, review: "" }, // Into the Wild
   { imdbUrl: "https://www.imdb.com/title/tt0246578/", rating: 0, review: "" }, // Donnie Darko
+  { imdbUrl: "https://www.imdb.com/title/tt3224458/", rating: 0, review: "" }, // A Beautiful Day in the Neighborhood
   { imdbUrl: "https://www.imdb.com/title/tt0099685/", rating: 0, review: "" }, // Goodfellas
   { imdbUrl: "https://www.imdb.com/title/tt1302006/", rating: 0, review: "" }, // The Irishman
   { imdbUrl: "https://www.imdb.com/title/tt17351924/", rating: 0, review: "" }, // Saltburn
@@ -1056,6 +1071,12 @@ const shows: TVShow[] = [
     // Mindhunter
     imdbUrl: "https://www.imdb.com/title/tt5290382/",
     rating: 6.5,
+    review: "",
+  },
+  {
+    // Chernobyl
+    imdbUrl: "https://www.imdb.com/title/tt7366338/",
+    rating: 7.9,
     review: "",
   },
   {
