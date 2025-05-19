@@ -209,42 +209,122 @@ const favoriteArtists: MusicItem[] = [
   {
     spotifyUrl: "https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x",
     type: "artist",
-    rating: 9.8,
+    rating: 11,
     review:
-      "The Weeknd creates amazing atmospheric music that I love listening to. His voice is incredible.",
+      "Ok here me out... I'm not even going to defend the person that he has become, I really hope he will find himself again. But his music has really changed my life, he truly is a genious artist and I invite you to listen to some of his less known stuff like 'Roses', 'Only One', 'Never See Me Again with Orchestral Intro', 'Brothers'... Thank me later.",
     rank: 1,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/4tZwfgrHOc3mvqYlEYSvVi",
+    spotifyUrl: "https://open.spotify.com/artist/3TVXtAsR1Inumwj472S9r4",
     type: "artist",
-    rating: 9.5,
-    review:
-      "Daft Punk revolutionized electronic music with their innovative sound and visual aesthetics.",
+    rating: 11,
+    review: "test",
     rank: 2,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/2YZyLoL8N0Wb9xBt1NhZWg",
+    spotifyUrl: "https://open.spotify.com/artist/4MCBfE4596Uoi2O4DtmEMz",
     type: "artist",
-    rating: 9.3,
-    review:
-      "Kendrick Lamar's storytelling and lyricism are unmatched in modern hip-hop.",
+    rating: 11,
+    review: "test",
     rank: 3,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/46pWGuE3dSwY3bMMXGBvVS",
+    spotifyUrl: "https://open.spotify.com/artist/1wxPItEzr7U7rGSMPqZ25r",
     type: "artist",
-    rating: 9.0,
-    review:
-      "Rema has been pushing the boundaries of afrobeats with his unique sound.",
+    rating: 10,
+    review: "test",
     rank: 4,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/7tYKF4w9nC0nq9CsPZTHyP",
+    spotifyUrl: "https://open.spotify.com/artist/1QAJqy2dA3ihHBFIHRphZj",
+    type: "artist",
+    rating: 10,
+    review: "test",
+    rank: 5,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6lcwlkAjBPSKnFBZjjZFJs",
+    type: "artist",
+    rating: 10,
+    review: "test",
+    rank: 6,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6EPlBSH2RSiettczlz7ihV",
+    type: "artist",
+    rating: 9.8,
+    review: "test",
+    rank: 7,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/15UsOTVnJzReFVN1VCnxy4",
+    type: "artist",
+    rating: 9.5,
+    review: "test",
+    rank: 8,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6FBDaR13swtiWwGhX1WQsP",
+    type: "artist",
+    rating: 9,
+    review: "test",
+    rank: 9,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4O15NlyKLIASxsJ0PrXPfz",
+    type: "artist",
+    rating: 9,
+    review: "test",
+    rank: 10,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/5H4yInM5zmHqpKIoMNAx4r",
     type: "artist",
     rating: 8.8,
-    review:
-      "Victoria Monét's vocal range and production choices make her stand out.",
-    rank: 5,
+    review: "test",
+    rank: 11,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4oLeXFyACqeem2VImYeBFe",
+    type: "artist",
+    rating: 8.5,
+    review: "test",
+    rank: 12,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/1WaFQSHVGZQJTbf0BdxdNo",
+    type: "artist",
+    rating: 8.4,
+    review: "test",
+    rank: 13,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/0z4gvV4rjIZ9wHck67ucSV",
+    type: "artist",
+    rating: 8,
+    review: "test",
+    rank: 14,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/0fA0VVWsXO9YnASrzqfmYu",
+    type: "artist",
+    rating: 8,
+    review: "test",
+    rank: 15,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/3tlXnStJ1fFhdScmQeLpuG",
+    type: "artist",
+    rating: 7.8,
+    review: "test",
+    rank: 16,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/31TPClRtHm23RisEBtV3X7",
+    type: "artist",
+    rating: 7,
+    review: "test",
+    rank: 17,
   },
 ];
 
@@ -544,39 +624,16 @@ export default function MusicPage() {
         </Button>
       </div>
 
+      <p className="text-muted-foreground mb-8">
+        A curated collection of my favorite songs, artists, and playlists that make me who I am. Music is a huge part of my life, it helps me a lot letting out bottled up emotions. I like to listen to litterally anything as long as it makes me feel a certain way.
+      </p>
+
       {error && (
         <div className="mb-8 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-medium">Error: {error}</p>
           <p>Showing static data as a fallback.</p>
         </div>
       )}
-
-      {/* Quick Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Songs in Favorites
-              </p>
-              <p className="text-3xl font-bold">{totalSongs}</p>
-            </div>
-            <Music className="h-8 w-8 text-muted-foreground opacity-80" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Playlists
-              </p>
-              <p className="text-3xl font-bold">{playlists.length}</p>
-            </div>
-            <ListMusic className="h-8 w-8 text-muted-foreground opacity-80" />
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Favorites Section with Tabs */}
       <div className="mb-12">
