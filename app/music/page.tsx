@@ -166,8 +166,11 @@ function getRatingColor(rating: number) {
   return "text-red-500 dark:text-red-400";
 }
 
-// The BEST (4)EVER playlist ID
-const BEST_EVER_PLAYLIST_ID = "3FS5wKeNT7vvadtFYqDLRo";
+// Manually defined playlists in preferred display order
+const MY_PLAYLISTS = [
+  "https://open.spotify.com/playlist/3FS5wKeNT7vvadtFYqDLRo", // BEST (4)EVER
+  "https://open.spotify.com/playlist/71IxEx17QcvQZU5B4Yz1d7", // BEST (4)EVER
+];
 
 export default function MusicPage() {
   const [favoriteSongs, setFavoriteSongs] = useState<SpotifyTrack[]>([]);
@@ -228,6 +231,65 @@ export default function MusicPage() {
     e.currentTarget.src = "/placeholder.svg";
   };
 
+  // Add a new function in the MusicPage component to fetch playlist details
+  const [manualPlaylists, setManualPlaylists] = useState<any[]>([]);
+
+  // Function to extract playlist ID from URL
+  const extractPlaylistId = (url: string): string => {
+    const match = url.match(/playlist\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : "";
+  };
+
+  // Load manual playlists on component mount
+  useEffect(() => {
+    async function loadManualPlaylists() {
+      const playlistDetails = await Promise.all(
+        MY_PLAYLISTS.map(async (url) => {
+          try {
+            const id = extractPlaylistId(url);
+            if (!id) return null;
+
+            // Use getPlaylistById to get full playlist details including track count
+            const playlist = await getPlaylistById(id);
+
+            if (playlist) {
+              return {
+                id: playlist.id,
+                name: playlist.name,
+                images: playlist.images,
+                tracks: playlist.tracks,
+                external_urls: playlist.external_urls,
+                url,
+              };
+            }
+
+            // If we couldn't get the playlist from getPlaylistById, try using getMusicDetailsFromSpotifyUrl as fallback
+            const details = await getMusicDetailsFromSpotifyUrl(url);
+            if (details) {
+              return {
+                name: details.name || "Unknown Playlist",
+                images: [{ url: details.coverUrl || "" }],
+                tracks: { total: 0 },
+                external_urls: { spotify: url },
+                url,
+              };
+            }
+
+            return null;
+          } catch (error) {
+            console.error(`Error fetching playlist from URL ${url}:`, error);
+            return null;
+          }
+        })
+      );
+
+      // Filter out any null results
+      setManualPlaylists(playlistDetails.filter(Boolean));
+    }
+
+    loadManualPlaylists();
+  }, []);
+
   useEffect(() => {
     async function fetchMusicData() {
       setIsLoading(true);
@@ -267,7 +329,10 @@ export default function MusicPage() {
         // Try to fetch the BEST (4)EVER playlist first
         let bestEverTracksFormatted = [] as SpotifyTrack[];
         try {
-          const bestEverPlaylist = await getPlaylistById(BEST_EVER_PLAYLIST_ID);
+          // Using the ID directly instead of a constant
+          const bestEverPlaylist = await getPlaylistById(
+            "3FS5wKeNT7vvadtFYqDLRo"
+          );
           if (bestEverPlaylist && bestEverPlaylist.tracks?.items?.length > 0) {
             bestEverTracksFormatted = bestEverPlaylist.tracks.items.map(
               (item) => item.track
@@ -278,33 +343,21 @@ export default function MusicPage() {
               "tracks"
             );
           } else {
-            console.log("Fallback to static BEST (4)EVER data");
-            // Fallback to static data if API fails
-            bestEverTracksFormatted = bestEverSongs.map((song, index) => ({
-              id: `best-ever-${index}`,
-              name: song.name,
-              artists: song.artists,
-              album: song.album,
-              external_urls: song.external_urls,
-            })) as SpotifyTrack[];
+            console.log("Could not fetch BEST (4)EVER playlist");
+            // Use empty array as fallback
+            bestEverTracksFormatted = [];
           }
         } catch (err) {
           console.error("Error fetching BEST (4)EVER playlist:", err);
-          // Fallback to static data
-          bestEverTracksFormatted = bestEverSongs.map((song, index) => ({
-            id: `best-ever-${index}`,
-            name: song.name,
-            artists: song.artists,
-            album: song.album,
-            external_urls: song.external_urls,
-          })) as SpotifyTrack[];
+          // Use empty array as fallback
+          bestEverTracksFormatted = [];
         }
 
         // Set initial data with what we have so far
         setFavoriteSongs(bestEverTracksFormatted);
         setFavoriteArtistsWithDetails(updatedFavoriteArtists);
 
-        // Try to fetch from Spotify API, but use sample data if it fails
+        // Try to fetch from Spotify API, but use empty arrays if it fails
         let recentTracks = [] as SpotifyTrack[];
         let recentArtists = [] as SpotifyArtist[];
         let userPlaylists = [] as SpotifyPlaylist[];
@@ -315,7 +368,7 @@ export default function MusicPage() {
           await delay(500);
           recentTracks = await getUserTopTracks().catch((err) => {
             console.error("Error fetching recent tracks:", err);
-            return bestEverTracksFormatted.slice(0, 8);
+            return [];
           });
           setTopTracks(recentTracks);
 
@@ -331,20 +384,8 @@ export default function MusicPage() {
           await delay(1000);
           userPlaylists = await getUserPlaylists().catch((err) => {
             console.error("Error fetching user playlists:", err);
-            // Fallback to manual playlists
-            return manualPlaylists.map((playlist) => ({
-              id: playlist.spotifyUrl.split("/").pop() || "",
-              name: playlist.name,
-              description: playlist.description,
-              owner: { display_name: playlist.owner },
-              images: [{ url: playlist.imageUrl, height: 640, width: 640 }],
-              tracks: {
-                total: playlist.trackCount,
-                items: [], // Empty array since we don't have the actual tracks
-              },
-              external_urls: { spotify: playlist.spotifyUrl },
-              public: true,
-            }));
+            // Use empty array as fallback
+            return [];
           });
           setPlaylists(userPlaylists);
         } catch (err) {
@@ -444,7 +485,7 @@ export default function MusicPage() {
       {error && (
         <div className="mb-8 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-medium">Error: {error}</p>
-          <p>Showing static data as a fallback.</p>
+          <p>There was a problem fetching data from Spotify.</p>
         </div>
       )}
 
@@ -652,73 +693,39 @@ export default function MusicPage() {
       </div>
 
       {/* My Playlists Section */}
-      {playlists.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">My Playlists</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {playlists
-              .filter(
-                (playlist) =>
-                  // Only show playlists that are:
-                  // 1. Public playlists
-                  // 2. Owned by Fausto
-                  playlist.public === true &&
-                  playlist.owner.display_name === "Fausto Zamparelli"
-              )
-              .map((playlist) => (
-                <a
-                  key={playlist.id}
-                  href={playlist.external_urls.spotify}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block group"
-                >
-                  <div className="aspect-square mb-2 relative rounded-md overflow-hidden shadow-md">
-                    <Image
-                      src={playlist.images[0]?.url || "/placeholder.svg"}
-                      alt={playlist.name}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                      className="object-cover transition-all group-hover:scale-105"
-                      unoptimized
-                      onError={handleImageError}
-                    />
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Play className="h-12 w-12 text-white fill-current" />
-                    </div>
-                  </div>
-                  <p className="font-medium truncate">{playlist.name}</p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {playlist.tracks.total} tracks •{" "}
-                    {playlist.owner.display_name}
-                  </p>
-                </a>
-              ))}
-          </div>
-        </section>
-      )}
-
-      {/* Top Genres Section */}
-      {genreData.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Top Genres</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {genreData.map(({ name, value }, index) => (
-              <Card key={name} className="overflow-hidden">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-                  <div className="bg-primary/10 p-3 rounded-full mb-2">
-                    <Disc className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-medium capitalize">{name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {value} occurrences
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">My Playlists</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {manualPlaylists.map((playlist, index) => (
+            <a
+              key={index}
+              href={playlist.external_urls?.spotify || playlist.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block group"
+            >
+              <div className="aspect-square mb-2 relative rounded-md overflow-hidden shadow-md">
+                <Image
+                  src={playlist.images?.[0]?.url || "/placeholder.svg"}
+                  alt={playlist.name || "Playlist"}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                  className="object-cover transition-all group-hover:scale-105"
+                  unoptimized
+                  onError={handleImageError}
+                />
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Play className="h-12 w-12 text-white fill-current" />
+                </div>
+              </div>
+              <p className="font-medium truncate">{playlist.name}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                {playlist.tracks?.total || 0} tracks
+              </p>
+            </a>
+          ))}
+        </div>
+      </section>
 
       {/* Recently Played Tracks Section */}
       <section className="mb-12">
@@ -781,6 +788,28 @@ export default function MusicPage() {
           ))}
         </div>
       </section>
+
+      {/* Top Genres Section */}
+      {genreData.length > 0 && (
+        <section className="pt-12 mb-12">
+          <h2 className="text-2xl font-bold mb-6">Top Genres</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            {genreData.map(({ name, value }, index) => (
+              <Card key={name} className="overflow-hidden">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+                  <div className="bg-primary/10 p-3 rounded-full mb-2">
+                    <Disc className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-medium capitalize">{name}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {value} occurrences
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       <MusicStatsModal
         isOpen={isStatsModalOpen}
