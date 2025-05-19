@@ -185,6 +185,18 @@ const movies: Movie[] = [
     review: "",
   },
   {
+    // Step Up 3D
+    imdbUrl: "https://www.imdb.com/title/tt1193631/",
+    rating: 0,
+    review: "",
+  },
+  {
+    // Step Up Revolution
+    imdbUrl: "https://www.imdb.com/title/tt1800741/",
+    rating: 0,
+    review: "",
+  },
+  {
     // Lady and the Tramp
     imdbUrl: "https://www.imdb.com/title/tt0048280/",
     rating: 0,
