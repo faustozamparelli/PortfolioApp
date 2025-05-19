@@ -14,6 +14,7 @@ import {
   HeadphonesIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import React from "react";
 import { MusicStatsModal } from "@/components/music-stats-modal";
 import { ArtistReviewModal } from "@/components/artist-review-modal";
 import {
@@ -423,6 +424,13 @@ export default function MusicPage() {
     setIsArtistModalOpen(false);
   };
 
+  // Handle image loading errors
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>
+  ) => {
+    e.currentTarget.src = "/placeholder.svg";
+  };
+
   useEffect(() => {
     async function fetchMusicData() {
       setIsLoading(true);
@@ -454,6 +462,10 @@ export default function MusicPage() {
             }
           })
         );
+
+        // Helper function to delay between API calls
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
 
         // Try to fetch the BEST (4)EVER playlist first
         let bestEverTracksFormatted = [] as SpotifyTrack[];
@@ -491,51 +503,57 @@ export default function MusicPage() {
           })) as SpotifyTrack[];
         }
 
+        // Set initial data with what we have so far
+        setFavoriteSongs(bestEverTracksFormatted);
+        setFavoriteArtistsWithDetails(updatedFavoriteArtists);
+
         // Try to fetch from Spotify API, but use sample data if it fails
         let recentTracks = [] as SpotifyTrack[];
         let recentArtists = [] as SpotifyArtist[];
-
-        try {
-          recentTracks = await getUserTopTracks();
-        } catch (err) {
-          console.error("Error fetching recent tracks:", err);
-          // Use some songs from the BEST (4)EVER as a fallback
-          recentTracks = bestEverTracksFormatted.slice(0, 8);
-        }
-
-        try {
-          recentArtists = await getUserTopArtists();
-        } catch (err) {
-          console.error("Error fetching recent artists:", err);
-          // Fallback to sample data if needed
-        }
-
-        // Try to fetch user's playlists from Spotify, fallback to manual list if needed
         let userPlaylists = [] as SpotifyPlaylist[];
-        try {
-          userPlaylists = await getUserPlaylists();
-          console.log(
-            `Successfully fetched ${userPlaylists.length} user playlists`
-          );
-        } catch (err) {
-          console.error("Error fetching user playlists:", err);
-          // Fallback to manual playlists
-          userPlaylists = manualPlaylists.map((playlist) => ({
-            id: playlist.spotifyUrl.split("/").pop() || "",
-            name: playlist.name,
-            description: playlist.description,
-            owner: { display_name: playlist.owner },
-            images: [{ url: playlist.imageUrl, height: 640, width: 640 }],
-            tracks: {
-              total: playlist.trackCount,
-              items: [], // Empty array since we don't have the actual tracks
-            },
-            external_urls: { spotify: playlist.spotifyUrl },
-            public: true,
-          }));
-        }
 
-        setPlaylists(userPlaylists);
+        // Stagger API calls with delays to avoid rate limits
+        try {
+          // First API call
+          await delay(500);
+          recentTracks = await getUserTopTracks().catch((err) => {
+            console.error("Error fetching recent tracks:", err);
+            return bestEverTracksFormatted.slice(0, 8);
+          });
+          setTopTracks(recentTracks);
+
+          // Second API call
+          await delay(1000);
+          recentArtists = await getUserTopArtists().catch((err) => {
+            console.error("Error fetching recent artists:", err);
+            return [];
+          });
+          setTopArtists(recentArtists);
+
+          // Third API call
+          await delay(1000);
+          userPlaylists = await getUserPlaylists().catch((err) => {
+            console.error("Error fetching user playlists:", err);
+            // Fallback to manual playlists
+            return manualPlaylists.map((playlist) => ({
+              id: playlist.spotifyUrl.split("/").pop() || "",
+              name: playlist.name,
+              description: playlist.description,
+              owner: { display_name: playlist.owner },
+              images: [{ url: playlist.imageUrl, height: 640, width: 640 }],
+              tracks: {
+                total: playlist.trackCount,
+                items: [], // Empty array since we don't have the actual tracks
+              },
+              external_urls: { spotify: playlist.spotifyUrl },
+              public: true,
+            }));
+          });
+          setPlaylists(userPlaylists);
+        } catch (err) {
+          console.error("Error during staggered API calls:", err);
+          // Already handled in the individual catch blocks
+        }
 
         // Calculate genres from all available data
         const genreCounts: Record<string, number> = {};
@@ -563,11 +581,6 @@ export default function MusicPage() {
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5)
           .map(([name, count]) => ({ name, value: count }));
-
-        setFavoriteSongs(bestEverTracksFormatted);
-        setFavoriteArtistsWithDetails(updatedFavoriteArtists);
-        setTopTracks(recentTracks);
-        setTopArtists(recentArtists);
 
         // Store the calculated genre data as a state variable
         if (topGenres.length > 0) {
@@ -625,7 +638,10 @@ export default function MusicPage() {
       </div>
 
       <p className="text-muted-foreground mb-8">
-        A curated collection of my favorite songs, artists, and playlists that make me who I am. Music is a huge part of my life, it helps me a lot letting out bottled up emotions. I like to listen to litterally anything as long as it makes me feel a certain way.
+        A curated collection of my favorite songs, artists, and playlists that
+        make me who I am. Music is a huge part of my life, it helps me a lot
+        letting out bottled up emotions. I like to listen to litterally anything
+        as long as it makes me feel a certain way.
       </p>
 
       {error && (
@@ -651,7 +667,7 @@ export default function MusicPage() {
                 Showing {paginatedSongs.length} of {favoriteSongs.length} songs
                 (page {currentPage} of {totalPages})
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button
                   variant="outline"
                   size="sm"
@@ -660,6 +676,38 @@ export default function MusicPage() {
                 >
                   Previous
                 </Button>
+
+                {/* Numbered pagination */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (page) =>
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                  )
+                  .map((page, index, array) => (
+                    <React.Fragment key={page}>
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="px-2"
+                        >
+                          ...
+                        </Button>
+                      )}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="px-3"
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  ))}
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -687,6 +735,7 @@ export default function MusicPage() {
                       sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 16vw, 12.5vw"
                       className="object-cover transition-all group-hover:scale-105"
                       unoptimized
+                      onError={handleImageError}
                     />
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Play className="h-6 w-6 text-white fill-current" />
@@ -722,6 +771,7 @@ export default function MusicPage() {
                         fill
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                         className="object-cover transition-all hover:scale-105"
+                        onError={handleImageError}
                       />
                     ) : (
                       <div className="absolute inset-0 bg-muted flex items-center justify-center">
@@ -825,6 +875,7 @@ export default function MusicPage() {
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                     className="object-cover transition-all group-hover:scale-105"
                     unoptimized
+                    onError={handleImageError}
                   />
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Play className="h-12 w-12 text-white fill-current" />
@@ -880,6 +931,7 @@ export default function MusicPage() {
                   alt={track.name}
                   fill
                   className="object-cover transition-all group-hover:scale-105"
+                  onError={handleImageError}
                 />
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Play className="h-10 w-10 text-white fill-current" />
@@ -912,6 +964,7 @@ export default function MusicPage() {
                   alt={artist.name}
                   fill
                   className="object-cover transition-all group-hover:scale-105"
+                  onError={handleImageError}
                 />
               </div>
               <p className="font-medium text-sm truncate text-center">

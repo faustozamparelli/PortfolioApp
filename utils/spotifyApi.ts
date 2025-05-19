@@ -149,7 +149,9 @@ async function getAccessToken(): Promise<string> {
  */
 async function spotifyApiRequest(
   endpoint: string,
-  accessToken?: string
+  accessToken?: string,
+  retryCount: number = 0,
+  maxRetries: number = 3
 ): Promise<any> {
   try {
     // Get access token if not provided
@@ -172,6 +174,36 @@ async function spotifyApiRequest(
       },
     });
 
+    // Handle rate limiting with exponential backoff
+    if (response.status === 429 && retryCount < maxRetries) {
+      // Get retry-after header or use exponential backoff
+      const retryAfter = parseInt(
+        response.headers.get("Retry-After") || "0",
+        10
+      );
+      const delay =
+        retryAfter > 0
+          ? retryAfter * 1000
+          : Math.min(1000 * Math.pow(2, retryCount), 60000); // Exponential backoff with 1min max
+
+      console.warn(
+        `Rate limit exceeded. Retrying after ${delay / 1000}s (attempt ${
+          retryCount + 1
+        }/${maxRetries})...`
+      );
+
+      // Wait for the specified delay
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Retry the request
+      return spotifyApiRequest(
+        endpoint,
+        accessToken,
+        retryCount + 1,
+        maxRetries
+      );
+    }
+
     if (!response.ok) {
       const errorText = await response.text();
       let errorData;
@@ -182,6 +214,14 @@ async function spotifyApiRequest(
       }
 
       console.error(`Spotify API request failed for ${endpoint}:`, errorData);
+
+      // If it's a rate limit issue but we've exhausted retries, throw a specific error
+      if (response.status === 429) {
+        throw new Error(
+          `Spotify API rate limit exceeded. Please try again later.`
+        );
+      }
+
       throw new Error(
         `Spotify API request failed: ${
           errorData.error?.message || errorData.error || "Unknown error"
