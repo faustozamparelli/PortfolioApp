@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MusicStatsModal } from "@/components/music-stats-modal";
+import { ArtistReviewModal } from "@/components/artist-review-modal";
 import {
   getMusicDetailsFromSpotifyUrl,
   MusicItem,
@@ -206,7 +207,7 @@ const bestEverSongs = [
 // Manually added favorite artists with rankings
 const favoriteArtists: MusicItem[] = [
   {
-    spotifyUrl: "https://open.spotify.com/artist/6MDME20pz9RveH9rEXvrOM",
+    spotifyUrl: "https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x",
     type: "artist",
     rating: 9.8,
     review:
@@ -301,6 +302,8 @@ export default function MusicPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState<MusicItem | null>(null);
+  const [isArtistModalOpen, setIsArtistModalOpen] = useState(false);
   const [genreData, setGenreData] = useState<{ name: string; value: number }[]>(
     [
       { name: "Hip Hop", value: 12 },
@@ -331,20 +334,46 @@ export default function MusicPage() {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
+  const openArtistReviewModal = (artist: MusicItem) => {
+    setSelectedArtist(artist);
+    setIsArtistModalOpen(true);
+  };
+
+  const closeArtistReviewModal = () => {
+    setIsArtistModalOpen(false);
+  };
+
   useEffect(() => {
     async function fetchMusicData() {
       setIsLoading(true);
       setError(null);
       try {
-        // No longer fetch details for favorite artists since we don't display them
-        // Use static data for artists instead
-        const updatedFavoriteArtists = favoriteArtists.map((item) => ({
-          ...item,
-          name: item.name || item.spotifyUrl,
-          coverUrl: item.coverUrl || "/placeholder.svg",
-          genres: item.genres || [],
-          popularity: item.popularity || 0,
-        }));
+        // Fetch details for favorite artists from Spotify
+        const updatedFavoriteArtists = await Promise.all(
+          favoriteArtists.map(async (artist) => {
+            try {
+              const details = await getMusicDetailsFromSpotifyUrl(
+                artist.spotifyUrl
+              );
+              if (details) {
+                return {
+                  ...artist,
+                  name: details.name || artist.name,
+                  coverUrl: details.coverUrl || "/placeholder.svg",
+                  genres: details.genres || [],
+                  popularity: details.popularity || 0,
+                };
+              }
+              return artist;
+            } catch (error) {
+              console.error(
+                `Error fetching details for artist ${artist.spotifyUrl}:`,
+                error
+              );
+              return artist;
+            }
+          })
+        );
 
         // Try to fetch the BEST (4)EVER playlist first
         let bestEverTracksFormatted = [] as SpotifyTrack[];
@@ -619,7 +648,15 @@ export default function MusicPage() {
           <TabsContent value="artists" className="mt-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {favoriteArtistsWithDetails.map((artist) => (
-                <Card key={artist.spotifyUrl} className="overflow-hidden">
+                <Card
+                  key={artist.spotifyUrl}
+                  className={`overflow-hidden ${
+                    artist.review
+                      ? "cursor-pointer hover:shadow-lg transition-shadow"
+                      : ""
+                  }`}
+                  onClick={() => artist.review && openArtistReviewModal(artist)}
+                >
                   <div className="relative pb-[100%] overflow-hidden">
                     {artist.coverUrl ? (
                       <Image
@@ -656,26 +693,53 @@ export default function MusicPage() {
                         )}`}
                       />
                     </div>
-                  </CardContent>
-                  {artist.review && (
-                    <CardFooter className="p-2 pt-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-xs"
-                        asChild
-                      >
-                        <a
-                          href={artist.spotifyUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                    {artist.genres && artist.genres.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-1 mt-2">
+                        {artist.genres.slice(0, 2).map((genre, idx) => (
+                          <span
+                            key={idx}
+                            className="px-1.5 py-0.5 bg-muted text-xs rounded-md"
+                          >
+                            {genre}
+                          </span>
+                        ))}
+                        {artist.genres.length > 2 && (
+                          <span className="px-1.5 py-0.5 bg-muted text-xs rounded-md">
+                            +{artist.genres.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {artist.review && (
+                      <div className="mt-2 text-center">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto text-xs"
                         >
-                          <span>Open in Spotify</span>
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                      </Button>
-                    </CardFooter>
-                  )}
+                          Read my review
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="p-2 pt-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs"
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a
+                        href={artist.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span>Open in Spotify</span>
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
@@ -805,6 +869,15 @@ export default function MusicPage() {
         isOpen={isStatsModalOpen}
         onClose={() => setIsStatsModalOpen(false)}
       />
+
+      {/* Artist Review Modal */}
+      {selectedArtist && (
+        <ArtistReviewModal
+          isOpen={isArtistModalOpen}
+          onClose={closeArtistReviewModal}
+          artist={selectedArtist}
+        />
+      )}
     </div>
   );
 }
