@@ -1,5 +1,5 @@
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
-const SPOTIFY_TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
+const SPOTIFY_TOKEN_ENDPOINT = "/api/spotify?type=token";
 
 // These would normally be environment variables
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "";
@@ -212,18 +212,25 @@ async function processNextRequest() {
   const { endpoint, accessToken, resolve, reject } = requestQueue.shift()!;
 
   try {
-    // Make sure endpoint doesn't have the base URL already
-    const fullEndpoint = endpoint.startsWith("http")
-      ? endpoint
-      : `${SPOTIFY_API_BASE_URL}${endpoint}`;
+    // Check if the endpoint is a full URL or a relative path
+    const isFullUrl = endpoint.startsWith("http");
+    let response;
 
-    console.log(`Making Spotify API request to: ${fullEndpoint}`);
-
-    const response = await fetch(fullEndpoint, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    if (isFullUrl) {
+      // For full URLs, use fetch directly
+      response = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } else {
+      // For relative paths, use our server-side proxy
+      response = await fetch(
+        `/api/spotify?type=api&endpoint=${encodeURIComponent(
+          endpoint
+        )}&token=${accessToken}`
+      );
+    }
 
     // Handle rate limiting
     if (response.status === 429) {
@@ -312,30 +319,11 @@ async function getAccessToken(forceRefresh = false): Promise<string> {
     }
   }
 
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
-    console.warn("Spotify credentials not found. Using sample data.");
-    console.log("Client ID exists:", !!SPOTIFY_CLIENT_ID);
-    console.log("Client Secret exists:", !!SPOTIFY_CLIENT_SECRET);
-    console.log("Refresh Token exists:", !!SPOTIFY_REFRESH_TOKEN);
-    return "";
-  }
-
   try {
-    const basic = Buffer.from(
-      `${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`
-    ).toString("base64");
-
-    console.log("Making token request to Spotify...");
+    console.log("Making token request to Spotify via proxy...");
+    // Use our server-side proxy instead of direct API calls
     const response = await fetch(SPOTIFY_TOKEN_ENDPOINT, {
       method: "POST",
-      headers: {
-        Authorization: `Basic ${basic}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: SPOTIFY_REFRESH_TOKEN,
-      }).toString(),
     });
 
     if (!response.ok) {
@@ -387,6 +375,10 @@ async function spotifyApiRequest(
     if (!token) {
       throw new Error("No access token available");
     }
+
+    // Use our server-side proxy instead of direct API calls to avoid CORS
+    // For endpoints that are full URLs, use them directly
+    const isFullUrl = endpoint.startsWith("http");
 
     // Add request to queue and wait for result
     const result = await new Promise((resolve, reject) => {
