@@ -1294,3 +1294,69 @@ async function loadRemainingPlaylistTracks(
     return playlist;
   }
 }
+
+// Function to get playlists in batch with minimal data
+export async function fetchPlaylistsInBatch(
+  playlistIds: string[]
+): Promise<SpotifyPlaylist[]> {
+  if (!playlistIds || playlistIds.length === 0) {
+    return [];
+  }
+
+  try {
+    // Extract just the playlist IDs from URLs if needed
+    const cleanIds = playlistIds.map((id) => {
+      // If it's a URL, extract the ID
+      if (id.includes("spotify.com/playlist/")) {
+        const match = id.match(/playlist\/([a-zA-Z0-9]+)/);
+        return match ? match[1] : id;
+      }
+      return id;
+    });
+
+    // Create cache key for this batch request
+    const cacheKey = `batch_playlists_${cleanIds.join("_")}`;
+
+    // Check if we have this data in cache
+    if (
+      apiCache[cacheKey] &&
+      Date.now() - apiCache[cacheKey].timestamp < CACHE_TTL
+    ) {
+      console.log("Using cached batch playlist data");
+      return apiCache[cacheKey].data;
+    }
+
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      console.warn("No access token available");
+      return [];
+    }
+
+    // Use the new batch endpoint
+    const response = await fetch(
+      `/api/spotify?type=batch-playlists&ids=${cleanIds.join(
+        ","
+      )}&token=${accessToken}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch playlists: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Cache the response
+    apiCache[cacheKey] = {
+      data: data.playlists,
+      timestamp: Date.now(),
+    };
+
+    // Save to localStorage too
+    saveCacheToStorage(cacheKey, data.playlists);
+
+    return data.playlists;
+  } catch (error) {
+    console.error("Error fetching playlists in batch:", error);
+    return [];
+  }
+}

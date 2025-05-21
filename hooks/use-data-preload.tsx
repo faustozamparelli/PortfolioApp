@@ -17,6 +17,7 @@ import {
   getUserTopTracks,
   getUserTopArtists,
   getUserPlaylists,
+  fetchPlaylistsInBatch,
 } from "@/utils/spotifyApi";
 import { Book } from "@/types/books";
 import { getBookDetailsFromIsbn } from "@/utils/bookApi";
@@ -435,72 +436,61 @@ export const DataPreloadProvider = ({
       // Execute artist details requests in parallel (they're cached so this is fast)
       const updatedFavoriteArtists = await Promise.all(artistDetailsPromises);
 
-      // 2. Load manual playlists - get basic info first, don't fetch all tracks yet
-      const manualPlaylistsDetails = await Promise.all(
-        MY_PLAYLISTS.map(async (url) => {
-          try {
-            const id = extractPlaylistId(url);
-            if (!id) return null;
-
-            // Just get basic playlist info, don't fetch all tracks to avoid rate limiting
-            const playlist = await getPlaylistById(id, false);
-
-            if (playlist) {
-              return {
-                id: playlist.id,
-                name: playlist.name,
-                images: playlist.images,
-                tracks: playlist.tracks,
-                external_urls: playlist.external_urls,
-                url,
-              };
-            }
-            return null;
-          } catch (error) {
-            console.error(`Error fetching playlist from URL ${url}:`, error);
-            return null;
-          }
-        })
-      );
-
-      // Filter out null playlists
-      const validPlaylists = manualPlaylistsDetails.filter(Boolean);
-
-      // 3. Try to get "BEST (4)EVER" playlist for favorite songs
+      // 2. Load the BEST (4)EVER playlist for favorite songs
       let favoriteSongs: SpotifyTrack[] = [];
       try {
+        // This specific playlist contains the favorite songs
         const bestEverPlaylist = await getPlaylistById(
           "3FS5wKeNT7vvadtFYqDLRo",
           true
         );
         if (bestEverPlaylist && bestEverPlaylist.tracks?.items?.length > 0) {
           favoriteSongs = bestEverPlaylist.tracks.items.map(
-            (item) => item.track
+            (item: any) => item.track
           );
         }
       } catch (error) {
         console.error("Error fetching BEST (4)EVER playlist:", error);
       }
 
-      // 4. Get top tracks and artists in parallel
-      const [topTracks, topArtists] = await Promise.all([
-        getUserTopTracks().catch(() => []),
-        getUserTopArtists().catch(() => []),
-      ]);
+      // 3. Load top tracks - this gives us something to show if BEST (4)EVER fails
+      let topTracks: SpotifyTrack[] = [];
+      try {
+        topTracks = await getUserTopTracks();
+      } catch (error) {
+        console.error("Error fetching top tracks:", error);
+      }
 
-      // First update the UI with the data we have
+      // 4. Load playlists in batch with minimal data (name, image, count only)
+      let playlists: SpotifyPlaylist[] = [];
+      try {
+        playlists = await fetchPlaylistsInBatch(MY_PLAYLISTS);
+      } catch (error) {
+        console.error("Error fetching playlists in batch:", error);
+      }
+
+      // 5. Load top artists - not as critical, do this last
+      let topArtists: SpotifyArtist[] = [];
+      try {
+        topArtists = await getUserTopArtists();
+      } catch (error) {
+        console.error("Error fetching top artists:", error);
+      }
+
+      // Create initial music data with what we have so far
       const musicData = {
         loaded: true,
         loading: false,
         error: null,
-        favoriteSongs,
+        favoriteSongs: favoriteSongs.length > 0 ? favoriteSongs : topTracks, // Use top tracks as fallback
         favoriteArtists: updatedFavoriteArtists,
         topTracks,
         topArtists,
         playlists: [],
-        manualPlaylists: validPlaylists,
+        manualPlaylists: playlists,
       };
 
+      // Update state
       setData((prev) => ({
         ...prev,
         music: musicData,
@@ -508,87 +498,6 @@ export const DataPreloadProvider = ({
 
       // Save checkpoint
       saveCheckpoint("music", musicData);
-
-      // 5. After updating the UI, start loading full playlist data in the background
-      // This allows the user to see content while the rest loads
-      const loadFullPlaylistsInBackground = async () => {
-        // Only fetch user playlists in the background after the UI is updated
-        const userPlaylists = await getUserPlaylists().catch(() => []);
-
-        // Update the playlists in state and save checkpoint
-        setData((prev) => {
-          const updatedMusicData = {
-            ...prev.music,
-            playlists: userPlaylists,
-          };
-
-          // Save updated checkpoint with playlists
-          saveCheckpoint("music", updatedMusicData);
-
-          return {
-            ...prev,
-            music: updatedMusicData,
-          };
-        });
-
-        // Now load full details for each playlist one by one
-        for (const playlist of validPlaylists) {
-          if (!playlist || !playlist.id) continue;
-
-          try {
-            // Only load full playlist details if we don't have complete track data
-            if (
-              playlist.tracks?.total > (playlist.tracks?.items?.length || 0)
-            ) {
-              // Don't await this - let it happen in the background
-              getPlaylistById(playlist.id, true)
-                .then((fullPlaylist) => {
-                  if (fullPlaylist) {
-                    // Update this specific playlist in the list
-                    setData((prev) => {
-                      const updatedPlaylists = prev.music.manualPlaylists.map(
-                        (p) =>
-                          p.id === playlist.id
-                            ? {
-                                ...p,
-                                tracks: fullPlaylist.tracks,
-                              }
-                            : p
-                      );
-
-                      const updatedMusicData = {
-                        ...prev.music,
-                        manualPlaylists: updatedPlaylists,
-                      };
-
-                      // Save updated checkpoint with this playlist
-                      saveCheckpoint("music", updatedMusicData);
-
-                      return {
-                        ...prev,
-                        music: updatedMusicData,
-                      };
-                    });
-                  }
-                })
-                .catch((error) => {
-                  console.warn(
-                    `Background loading of playlist ${playlist.id} failed:`,
-                    error
-                  );
-                });
-            }
-          } catch (error) {
-            console.warn(
-              `Error in background playlist loading for ${playlist.id}:`,
-              error
-            );
-          }
-        }
-      };
-
-      // Start background loading
-      loadFullPlaylistsInBackground();
     } catch (error) {
       console.error("Error preloading music data:", error);
       setData((prev) => ({

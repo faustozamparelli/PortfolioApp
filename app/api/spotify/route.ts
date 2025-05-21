@@ -91,6 +91,60 @@ export async function POST(request: Request) {
       return NextResponse.json(data);
     }
 
+    if (requestType === "batch-playlists") {
+      // Get multiple playlists at once with minimal data
+      const playlistIds = searchParams.get("ids")?.split(",") || [];
+      const accessToken = searchParams.get("token");
+
+      if (playlistIds.length === 0) {
+        return NextResponse.json(
+          { error: "Missing playlist IDs" },
+          { status: 400 }
+        );
+      }
+
+      if (!accessToken) {
+        return NextResponse.json(
+          { error: "Missing access token" },
+          { status: 400 }
+        );
+      }
+
+      // Fetch all playlists in parallel
+      try {
+        const playlistPromises = playlistIds.map(async (id) => {
+          // Request minimal fields only
+          const response = await fetch(
+            `https://api.spotify.com/v1/playlists/${id}?fields=id,name,images,external_urls,tracks.total`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            console.warn(`Failed to fetch playlist ${id}: ${response.status}`);
+            return null;
+          }
+
+          return response.json();
+        });
+
+        // Wait for all requests to complete
+        const results = await Promise.all(playlistPromises);
+        const playlists = results.filter(Boolean); // Remove any failed requests
+
+        return NextResponse.json({ playlists });
+      } catch (error) {
+        console.error("Error fetching batch playlists:", error);
+        return NextResponse.json(
+          { error: "Failed to fetch playlists" },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Invalid request type" },
       { status: 400 }

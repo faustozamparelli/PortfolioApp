@@ -13,7 +13,7 @@ import {
   Disc,
   HeadphonesIcon,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import React from "react";
 import { MusicStatsModal } from "@/components/music-stats-modal";
 import { ArtistReviewModal } from "@/components/artist-review-modal";
@@ -184,6 +184,203 @@ const MY_PLAYLISTS = [
   "https://open.spotify.com/playlist/0KbYxKsExPPf7xuizhIGxx", // uk
   "https://open.spotify.com/playlist/4VOxTdmzrPFT3vQ9XBINoi", // italy
 ];
+
+// Add a skeleton loader component
+const SkeletonCard = () => (
+  <div className="flex flex-col gap-2">
+    <div className="aspect-square bg-muted animate-pulse rounded-md"></div>
+    <div className="h-4 w-2/3 bg-muted animate-pulse rounded-md"></div>
+    <div className="h-3 w-1/2 bg-muted animate-pulse rounded-md"></div>
+  </div>
+);
+
+// Playlist section with lazy loading
+const LazyPlaylistSection = ({
+  playlists,
+  isLoading,
+  handleImageError,
+}: any) => {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {Array(10)
+          .fill(0)
+          .map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {playlists.map((playlist: any, index: number) => (
+        <a
+          key={index}
+          href={playlist.external_urls?.spotify || playlist.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block group"
+        >
+          <div className="aspect-square mb-2 relative rounded-md overflow-hidden shadow-md">
+            <Image
+              src={playlist.images?.[0]?.url || "/placeholder.svg"}
+              alt={playlist.name || "Playlist"}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+              className="object-cover transition-all group-hover:scale-105"
+              unoptimized
+              onError={handleImageError}
+            />
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Play className="h-12 w-12 text-white fill-current" />
+            </div>
+          </div>
+          <p className="font-medium truncate">{playlist.name}</p>
+          <p className="text-sm text-muted-foreground truncate">
+            {playlist.tracks?.total || 0} tracks
+          </p>
+        </a>
+      ))}
+    </div>
+  );
+};
+
+// Artists section with lazy loading
+const LazyArtistsSection = ({
+  artists,
+  isLoading,
+  openArtistReviewModal,
+  handleImageError,
+}: any) => {
+  const [visibleArtists, setVisibleArtists] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isLoading && artists.length > 0) {
+      // Initially show 5 artists
+      setVisibleArtists(artists.slice(0, 5));
+
+      // Then load the rest after a short delay
+      const timer = setTimeout(() => {
+        setVisibleArtists(artists);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, artists]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {Array(5)
+          .fill(0)
+          .map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {visibleArtists.map((artist) => (
+        <Card
+          key={artist.spotifyUrl}
+          className={`overflow-hidden ${
+            artist.review
+              ? "cursor-pointer hover:shadow-lg transition-shadow"
+              : ""
+          }`}
+          onClick={() => artist.review && openArtistReviewModal(artist)}
+        >
+          <div className="relative pb-[100%] overflow-hidden">
+            {artist.coverUrl ? (
+              <Image
+                src={artist.coverUrl}
+                alt={artist.name || "Artist"}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+                className="object-cover transition-all hover:scale-105"
+                onError={handleImageError}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <User className="h-16 w-16 text-muted-foreground opacity-20" />
+              </div>
+            )}
+            <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              #{artist.rank}
+            </div>
+          </div>
+          <CardContent className="p-3">
+            <h3 className="font-bold text-sm line-clamp-1 text-center">
+              {artist.name}
+            </h3>
+            <div className="flex justify-center items-center gap-1 mt-1">
+              <span
+                className={`text-sm font-bold ${getRatingColor(artist.rating)}`}
+              >
+                {artist.rating.toFixed(1)}
+              </span>
+              <Star
+                className={`h-3 w-3 fill-current ${getRatingColor(
+                  artist.rating
+                )}`}
+              />
+            </div>
+            {artist.genres && artist.genres.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1 mt-2">
+                {artist.genres.slice(0, 2).map((genre: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="px-1.5 py-0.5 bg-muted text-xs rounded-md"
+                  >
+                    {genre}
+                  </span>
+                ))}
+                {artist.genres.length > 2 && (
+                  <span className="px-1.5 py-0.5 bg-muted text-xs rounded-md">
+                    +{artist.genres.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
+            {artist.review && (
+              <div className="mt-2 text-center">
+                <Button variant="link" size="sm" className="p-0 h-auto text-xs">
+                  Read my review
+                </Button>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="p-2 pt-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs"
+              asChild
+              onClick={(e) => e.stopPropagation()}
+            >
+              <a
+                href={artist.spotifyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>Open in Spotify</span>
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+      {visibleArtists.length < artists.length && (
+        <div className="col-span-full flex justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-gray-100"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function MusicPage() {
   const { data, preloadMusic } = useDataPreload();
@@ -456,104 +653,12 @@ export default function MusicPage() {
 
           {/* Artists Tab */}
           <TabsContent value="artists" className="mt-0">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {favoriteArtists.map((artist) => (
-                <Card
-                  key={artist.spotifyUrl}
-                  className={`overflow-hidden ${
-                    artist.review
-                      ? "cursor-pointer hover:shadow-lg transition-shadow"
-                      : ""
-                  }`}
-                  onClick={() => artist.review && openArtistReviewModal(artist)}
-                >
-                  <div className="relative pb-[100%] overflow-hidden">
-                    {artist.coverUrl ? (
-                      <Image
-                        src={artist.coverUrl}
-                        alt={artist.name || "Artist"}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
-                        className="object-cover transition-all hover:scale-105"
-                        onError={handleImageError}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                        <User className="h-16 w-16 text-muted-foreground opacity-20" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                      #{artist.rank}
-                    </div>
-                  </div>
-                  <CardContent className="p-3">
-                    <h3 className="font-bold text-sm line-clamp-1 text-center">
-                      {artist.name}
-                    </h3>
-                    <div className="flex justify-center items-center gap-1 mt-1">
-                      <span
-                        className={`text-sm font-bold ${getRatingColor(
-                          artist.rating
-                        )}`}
-                      >
-                        {artist.rating.toFixed(1)}
-                      </span>
-                      <Star
-                        className={`h-3 w-3 fill-current ${getRatingColor(
-                          artist.rating
-                        )}`}
-                      />
-                    </div>
-                    {artist.genres && artist.genres.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1 mt-2">
-                        {artist.genres.slice(0, 2).map((genre, idx) => (
-                          <span
-                            key={idx}
-                            className="px-1.5 py-0.5 bg-muted text-xs rounded-md"
-                          >
-                            {genre}
-                          </span>
-                        ))}
-                        {artist.genres.length > 2 && (
-                          <span className="px-1.5 py-0.5 bg-muted text-xs rounded-md">
-                            +{artist.genres.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {artist.review && (
-                      <div className="mt-2 text-center">
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="p-0 h-auto text-xs"
-                        >
-                          Read my review
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="p-2 pt-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-xs"
-                      asChild
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <a
-                        href={artist.spotifyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <span>Open in Spotify</span>
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            <LazyArtistsSection
+              artists={favoriteArtists}
+              isLoading={dataLoading}
+              openArtistReviewModal={openArtistReviewModal}
+              handleImageError={handleImageError}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -561,36 +666,11 @@ export default function MusicPage() {
       {/* My Playlists Section */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">My Playlists</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {manualPlaylists.map((playlist, index) => (
-            <a
-              key={index}
-              href={playlist.external_urls?.spotify || playlist.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block group"
-            >
-              <div className="aspect-square mb-2 relative rounded-md overflow-hidden shadow-md">
-                <Image
-                  src={playlist.images?.[0]?.url || "/placeholder.svg"}
-                  alt={playlist.name || "Playlist"}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                  className="object-cover transition-all group-hover:scale-105"
-                  unoptimized
-                  onError={handleImageError}
-                />
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Play className="h-12 w-12 text-white fill-current" />
-                </div>
-              </div>
-              <p className="font-medium truncate">{playlist.name}</p>
-              <p className="text-sm text-muted-foreground truncate">
-                {playlist.tracks?.total || 0} tracks
-              </p>
-            </a>
-          ))}
-        </div>
+        <LazyPlaylistSection
+          playlists={manualPlaylists}
+          isLoading={dataLoading}
+          handleImageError={handleImageError}
+        />
       </section>
 
       {/* Recently Played Tracks Section */}
