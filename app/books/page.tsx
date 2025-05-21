@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getBookDetailsFromIsbn } from "@/utils/bookApi";
+import { useDataPreload } from "@/hooks/use-data-preload";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -305,6 +306,7 @@ const topBooks: Book[] = [
 ];
 
 export default function BooksPage() {
+  const { data, preloadBooks } = useDataPreload();
   const [booksWithCovers, setBooksWithCovers] = useState<Book[]>([]);
   const [topBooksWithCovers, setTopBooksWithCovers] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -349,6 +351,10 @@ export default function BooksPage() {
   );
 
   useEffect(() => {
+    // Trigger preload data for books
+    preloadBooks();
+
+    // Keep existing books loading logic for now
     async function loadBookData() {
       setIsLoading(true);
       try {
@@ -394,7 +400,7 @@ export default function BooksPage() {
     }
 
     loadBookData();
-  }, []);
+  }, [preloadBooks]);
 
   const openBookReviewModal = async (book: Book) => {
     setIsLoading(true);

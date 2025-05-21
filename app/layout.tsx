@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Navigation from "@/components/navigation";
 import Attribution from "@/components/attribution";
 import PageTransition from "@/components/page-transition";
+import { DataPreloadProvider } from "@/hooks/use-data-preload";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,13 +33,15 @@ export default function RootLayout({
           storageKey="portfolio-theme"
           forcedTheme="dark"
         >
-          <div className="flex min-h-screen flex-col">
-            <Navigation />
-            <main className="flex-1">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Attribution />
-          </div>
+          <DataPreloadProvider>
+            <div className="flex min-h-screen flex-col">
+              <Navigation />
+              <main className="flex-1">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <Attribution />
+            </div>
+          </DataPreloadProvider>
         </ThemeProvider>
       </body>
     </html>

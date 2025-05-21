@@ -28,6 +28,7 @@ import {
   SpotifyPlaylist,
   getPlaylistById,
 } from "@/utils/spotifyApi";
+import { useDataPreload } from "@/hooks/use-data-preload";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -169,19 +170,34 @@ function getRatingColor(rating: number) {
 // Manually defined playlists in preferred display order
 const MY_PLAYLISTS = [
   "https://open.spotify.com/playlist/3FS5wKeNT7vvadtFYqDLRo", // BEST (4)EVER
-  "https://open.spotify.com/playlist/71IxEx17QcvQZU5B4Yz1d7", // BEST (4)EVER
+  "https://open.spotify.com/playlist/07h5SwwXN71WWooHooWXDJ", // Eventually
+  "https://open.spotify.com/playlist/5ouJiG6KMFZ5MYNqOd2mMu", // Rotation
+  "https://open.spotify.com/playlist/0mBY3992twtb08xkyo82nd", // 100% bops
+  "https://open.spotify.com/playlist/1BpQoiUYCmDr2Ey6obvU9r", // Stranger
+  "https://open.spotify.com/playlist/6kRYLNLx0UxQBcEU1Uygjp", // Sfascio
+  "https://open.spotify.com/playlist/5PpWmuf9v6lYeyIUNwcOsm", // Overthinking
+  "https://open.spotify.com/playlist/0RHNS7CWwDpCwyVsYVX8Ts", // Estate
+  "https://open.spotify.com/playlist/4wYsuynBL54ixYKPYyNCwE", // Sunset
+  "https://open.spotify.com/playlist/1qXWnpCKo3HEqZRDKXLNt9", // hot
+  "https://open.spotify.com/playlist/1vWR9KLyirVaAc0tPSm90P", // Manners
+  "https://open.spotify.com/playlist/6xIImQekZs49bIsH4wmsgQ", // fregauncazzo
+  "https://open.spotify.com/playlist/0KbYxKsExPPf7xuizhIGxx", // uk
+  "https://open.spotify.com/playlist/4VOxTdmzrPFT3vQ9XBINoi", // italy
 ];
 
 export default function MusicPage() {
-  const [favoriteSongs, setFavoriteSongs] = useState<SpotifyTrack[]>([]);
-  const [favoriteArtistsWithDetails, setFavoriteArtistsWithDetails] = useState<
-    MusicItem[]
-  >([]);
-  const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
-  const [topArtists, setTopArtists] = useState<SpotifyArtist[]>([]);
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, preloadMusic } = useDataPreload();
+  const {
+    loaded: dataLoaded,
+    loading: dataLoading,
+    error: dataError,
+    favoriteSongs,
+    favoriteArtists,
+    topTracks,
+    topArtists,
+    manualPlaylists,
+  } = data.music;
+
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<MusicItem | null>(null);
   const [isArtistModalOpen, setIsArtistModalOpen] = useState(false);
@@ -231,213 +247,52 @@ export default function MusicPage() {
     e.currentTarget.src = "/placeholder.svg";
   };
 
-  // Add a new function in the MusicPage component to fetch playlist details
-  const [manualPlaylists, setManualPlaylists] = useState<any[]>([]);
-
-  // Function to extract playlist ID from URL
-  const extractPlaylistId = (url: string): string => {
-    const match = url.match(/playlist\/([a-zA-Z0-9]+)/);
-    return match ? match[1] : "";
-  };
-
-  // Load manual playlists on component mount
+  // Load music data if not already loaded
   useEffect(() => {
-    async function loadManualPlaylists() {
-      const playlistDetails = await Promise.all(
-        MY_PLAYLISTS.map(async (url) => {
-          try {
-            const id = extractPlaylistId(url);
-            if (!id) return null;
-
-            // Use getPlaylistById to get full playlist details including track count
-            const playlist = await getPlaylistById(id);
-
-            if (playlist) {
-              return {
-                id: playlist.id,
-                name: playlist.name,
-                images: playlist.images,
-                tracks: playlist.tracks,
-                external_urls: playlist.external_urls,
-                url,
-              };
-            }
-
-            // If we couldn't get the playlist from getPlaylistById, try using getMusicDetailsFromSpotifyUrl as fallback
-            const details = await getMusicDetailsFromSpotifyUrl(url);
-            if (details) {
-              return {
-                name: details.name || "Unknown Playlist",
-                images: [{ url: details.coverUrl || "" }],
-                tracks: { total: 0 },
-                external_urls: { spotify: url },
-                url,
-              };
-            }
-
-            return null;
-          } catch (error) {
-            console.error(`Error fetching playlist from URL ${url}:`, error);
-            return null;
-          }
-        })
-      );
-
-      // Filter out any null results
-      setManualPlaylists(playlistDetails.filter(Boolean));
+    if (!dataLoaded && !dataLoading) {
+      preloadMusic();
     }
+  }, [dataLoaded, dataLoading, preloadMusic]);
 
-    loadManualPlaylists();
-  }, []);
-
+  // Calculate genre data from artists
   useEffect(() => {
-    async function fetchMusicData() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Fetch details for favorite artists from Spotify
-        const updatedFavoriteArtists = await Promise.all(
-          favoriteArtists.map(async (artist) => {
-            try {
-              const details = await getMusicDetailsFromSpotifyUrl(
-                artist.spotifyUrl
-              );
-              if (details) {
-                return {
-                  ...artist,
-                  name: details.name || artist.name,
-                  coverUrl: details.coverUrl || "/placeholder.svg",
-                  genres: details.genres || [],
-                  popularity: details.popularity || 0,
-                };
-              }
-              return artist;
-            } catch (error) {
-              console.error(
-                `Error fetching details for artist ${artist.spotifyUrl}:`,
-                error
-              );
-              return artist;
-            }
-          })
-        );
+    if (dataLoaded && favoriteArtists.length > 0 && topArtists.length > 0) {
+      // Calculate genres from all available data
+      const genreCounts: Record<string, number> = {};
 
-        // Helper function to delay between API calls
-        const delay = (ms: number) =>
-          new Promise((resolve) => setTimeout(resolve, ms));
-
-        // Try to fetch the BEST (4)EVER playlist first
-        let bestEverTracksFormatted = [] as SpotifyTrack[];
-        try {
-          // Using the ID directly instead of a constant
-          const bestEverPlaylist = await getPlaylistById(
-            "3FS5wKeNT7vvadtFYqDLRo"
-          );
-          if (bestEverPlaylist && bestEverPlaylist.tracks?.items?.length > 0) {
-            bestEverTracksFormatted = bestEverPlaylist.tracks.items.map(
-              (item) => item.track
-            );
-            console.log(
-              "Successfully fetched BEST (4)EVER playlist with",
-              bestEverTracksFormatted.length,
-              "tracks"
-            );
-          } else {
-            console.log("Could not fetch BEST (4)EVER playlist");
-            // Use empty array as fallback
-            bestEverTracksFormatted = [];
-          }
-        } catch (err) {
-          console.error("Error fetching BEST (4)EVER playlist:", err);
-          // Use empty array as fallback
-          bestEverTracksFormatted = [];
-        }
-
-        // Set initial data with what we have so far
-        setFavoriteSongs(bestEverTracksFormatted);
-        setFavoriteArtistsWithDetails(updatedFavoriteArtists);
-
-        // Try to fetch from Spotify API, but use empty arrays if it fails
-        let recentTracks = [] as SpotifyTrack[];
-        let recentArtists = [] as SpotifyArtist[];
-        let userPlaylists = [] as SpotifyPlaylist[];
-
-        // Stagger API calls with delays to avoid rate limits
-        try {
-          // First API call
-          await delay(500);
-          recentTracks = await getUserTopTracks().catch((err) => {
-            console.error("Error fetching recent tracks:", err);
-            return [];
+      // Extract genres from top artists
+      topArtists.forEach((artist) => {
+        if (artist.genres) {
+          artist.genres.forEach((genre) => {
+            genreCounts[genre] = (genreCounts[genre] || 0) + 1;
           });
-          setTopTracks(recentTracks);
-
-          // Second API call
-          await delay(1000);
-          recentArtists = await getUserTopArtists().catch((err) => {
-            console.error("Error fetching recent artists:", err);
-            return [];
-          });
-          setTopArtists(recentArtists);
-
-          // Third API call
-          await delay(1000);
-          userPlaylists = await getUserPlaylists().catch((err) => {
-            console.error("Error fetching user playlists:", err);
-            // Use empty array as fallback
-            return [];
-          });
-          setPlaylists(userPlaylists);
-        } catch (err) {
-          console.error("Error during staggered API calls:", err);
-          // Already handled in the individual catch blocks
         }
+      });
 
-        // Calculate genres from all available data
-        const genreCounts: Record<string, number> = {};
-
-        // Extract genres from top artists
-        recentArtists.forEach((artist) => {
-          if (artist.genres) {
-            artist.genres.forEach((genre) => {
-              genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-            });
-          }
-        });
-
-        // Extract genres from favorite artists too
-        updatedFavoriteArtists.forEach((artist) => {
-          if (artist.genres) {
-            artist.genres.forEach((genre) => {
-              genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-            });
-          }
-        });
-
-        // Create genre data for visualization
-        const topGenres = Object.entries(genreCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, count]) => ({ name, value: count }));
-
-        // Store the calculated genre data as a state variable
-        if (topGenres.length > 0) {
-          setGenreData(topGenres);
+      // Extract genres from favorite artists too
+      favoriteArtists.forEach((artist) => {
+        if (artist.genres) {
+          artist.genres.forEach((genre) => {
+            genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+          });
         }
-      } catch (error) {
-        console.error("Error fetching music data:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to fetch music data"
-        );
-      } finally {
-        setIsLoading(false);
+      });
+
+      // Create genre data for visualization - show up to 10 genres instead of just 5
+      const topGenres = Object.entries(genreCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name, count]) => ({ name, value: count }));
+
+      // Store the calculated genre data as a state variable
+      if (topGenres.length > 0) {
+        setGenreData(topGenres);
       }
     }
+  }, [dataLoaded, favoriteArtists, topArtists]);
 
-    fetchMusicData();
-  }, []);
-
-  if (isLoading) {
+  // Show loading state while data is loading
+  if (dataLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
@@ -447,10 +302,28 @@ export default function MusicPage() {
     );
   }
 
+  // Show error state if there's an error
+  if (dataError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-100 dark:bg-red-900 p-4 rounded-md text-red-800 dark:text-red-100">
+          <h2 className="text-2xl font-bold mb-2">Error loading music data</h2>
+          <p>{dataError}</p>
+          <button
+            onClick={() => preloadMusic()}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Get music statistics for display
   const totalSongs = favoriteSongs.length;
-  const totalArtists = favoriteArtistsWithDetails.length;
-  const topGenres = favoriteArtistsWithDetails
+  const totalArtists = favoriteArtists.length;
+  const topGenres = favoriteArtists
     .flatMap((artist) => artist.genres || [])
     .reduce((acc, genre) => {
       acc[genre] = (acc[genre] || 0) + 1;
@@ -481,13 +354,6 @@ export default function MusicPage() {
         letting out bottled up emotions. I like to listen to litterally anything
         as long as it makes me feel a certain way.
       </p>
-
-      {error && (
-        <div className="mb-8 p-4 bg-red-100 text-red-700 rounded-md">
-          <p className="font-medium">Error: {error}</p>
-          <p>There was a problem fetching data from Spotify.</p>
-        </div>
-      )}
 
       {/* Favorites Section with Tabs */}
       <div className="mb-12">
@@ -591,7 +457,7 @@ export default function MusicPage() {
           {/* Artists Tab */}
           <TabsContent value="artists" className="mt-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {favoriteArtistsWithDetails.map((artist) => (
+              {favoriteArtists.map((artist) => (
                 <Card
                   key={artist.spotifyUrl}
                   className={`overflow-hidden ${

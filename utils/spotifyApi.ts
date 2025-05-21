@@ -59,6 +59,7 @@ export interface SpotifyPlaylist {
     items: {
       track: SpotifyTrack;
     }[];
+    next?: string | null;
   };
 }
 
@@ -95,10 +96,222 @@ export interface MusicItem {
   popularity?: number;
 }
 
+// Add a simple in-memory cache for API responses
+const apiCache: Record<string, { data: any; timestamp: number }> = {};
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour cache expiration
+const LOCALSTORAGE_PREFIX = "spotify_cache_";
+const LOCALSTORAGE_TTL = 24 * 60 * 60 * 1000; // 24 hour localStorage cache
+
+// Load cached data from localStorage on startup
+function loadCachedDataFromStorage() {
+  try {
+    if (typeof window !== "undefined") {
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith(LOCALSTORAGE_PREFIX))
+        .forEach((key) => {
+          try {
+            const cached = JSON.parse(localStorage.getItem(key) || "");
+            if (cached && cached.timestamp && cached.data) {
+              // Check if the cached data is still valid
+              if (Date.now() - cached.timestamp < LOCALSTORAGE_TTL) {
+                const endpoint = key.replace(LOCALSTORAGE_PREFIX, "");
+                apiCache[endpoint] = cached;
+                console.log(
+                  `Loaded cached data for ${endpoint} from localStorage`
+                );
+              } else {
+                // Remove expired cache
+                localStorage.removeItem(key);
+              }
+            }
+          } catch (e) {
+            console.warn("Error parsing cached data:", e);
+            localStorage.removeItem(key);
+          }
+        });
+    }
+  } catch (e) {
+    console.warn("Error loading cached data from localStorage:", e);
+  }
+}
+
+// Initialize cache from localStorage
+if (typeof window !== "undefined") {
+  loadCachedDataFromStorage();
+}
+
+// Save cache to localStorage
+function saveCacheToStorage(endpoint: string, data: any) {
+  try {
+    if (typeof window !== "undefined") {
+      // Don't store excessive data in localStorage - skip large playlist responses
+      if (
+        endpoint.includes("/playlists/") &&
+        data &&
+        data.tracks &&
+        data.tracks.items &&
+        data.tracks.items.length > 20
+      ) {
+        // For playlists, store a lightweight version with just basic info and first 20 tracks
+        const lightPlaylist = {
+          ...data,
+          tracks: {
+            ...data.tracks,
+            items: data.tracks.items.slice(0, 20),
+          },
+        };
+
+        localStorage.setItem(
+          `${LOCALSTORAGE_PREFIX}${endpoint}`,
+          JSON.stringify({ data: lightPlaylist, timestamp: Date.now() })
+        );
+      } else {
+        localStorage.setItem(
+          `${LOCALSTORAGE_PREFIX}${endpoint}`,
+          JSON.stringify({ data, timestamp: Date.now() })
+        );
+      }
+    }
+  } catch (e) {
+    console.warn("Error saving cache to localStorage:", e);
+    // If we hit storage limits, clear all our caches
+    clearAllSpotifyCache();
+  }
+}
+
+// Clear all Spotify cache from localStorage
+function clearAllSpotifyCache() {
+  try {
+    if (typeof window !== "undefined") {
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith(LOCALSTORAGE_PREFIX))
+        .forEach((key) => localStorage.removeItem(key));
+    }
+  } catch (e) {
+    console.warn("Error clearing Spotify cache:", e);
+  }
+}
+
+// API request queue to prevent too many simultaneous requests
+const requestQueue: Array<{
+  endpoint: string;
+  accessToken: string;
+  resolve: (value: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+let isProcessingQueue = false;
+
+// Process one request from the queue
+async function processNextRequest() {
+  if (requestQueue.length === 0) {
+    isProcessingQueue = false;
+    return;
+  }
+
+  isProcessingQueue = true;
+  const { endpoint, accessToken, resolve, reject } = requestQueue.shift()!;
+
+  try {
+    // Make sure endpoint doesn't have the base URL already
+    const fullEndpoint = endpoint.startsWith("http")
+      ? endpoint
+      : `${SPOTIFY_API_BASE_URL}${endpoint}`;
+
+    console.log(`Making Spotify API request to: ${fullEndpoint}`);
+
+    const response = await fetch(fullEndpoint, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    // Handle rate limiting
+    if (response.status === 429) {
+      // Get retry-after header or use default delay
+      const retryAfter = parseInt(
+        response.headers.get("Retry-After") || "2",
+        10
+      );
+      console.warn(
+        `Rate limit exceeded. Waiting ${retryAfter}s before continuing...`
+      );
+
+      // Wait for the specified delay and push the request back to the front of the queue
+      await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+      requestQueue.unshift({ endpoint, accessToken, resolve, reject });
+
+      // Wait a bit before processing the next request
+      setTimeout(processNextRequest, 1000);
+      return;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { error: { message: errorText || "Unknown error" } };
+      }
+
+      console.error(`Spotify API request failed for ${endpoint}:`, errorData);
+
+      if (response.status === 401) {
+        // Token expired, clear from cache
+        console.warn("Access token expired. Getting a new token...");
+        const newToken = await getAccessToken(true);
+        if (newToken) {
+          // Re-add request to queue with new token
+          requestQueue.unshift({
+            endpoint,
+            accessToken: newToken,
+            resolve,
+            reject,
+          });
+          setTimeout(processNextRequest, 1000);
+          return;
+        }
+      }
+
+      reject(
+        new Error(
+          `Spotify API request failed: ${
+            errorData.error?.message || errorData.error || "Unknown error"
+          }`
+        )
+      );
+    } else {
+      const data = await response.json();
+      // Store in cache
+      apiCache[endpoint] = {
+        data,
+        timestamp: Date.now(),
+      };
+      resolve(data);
+    }
+  } catch (error) {
+    console.error(`Error making Spotify API request to ${endpoint}:`, error);
+    reject(error);
+  }
+
+  // Wait before processing the next request to avoid rate limits
+  setTimeout(processNextRequest, 1000);
+}
+
 /**
  * Get Spotify access token using client credentials
  */
-async function getAccessToken(): Promise<string> {
+async function getAccessToken(forceRefresh = false): Promise<string> {
+  // Use cached token unless force refresh is requested
+  if (!forceRefresh && apiCache["access_token"]?.data?.access_token) {
+    const cache = apiCache["access_token"];
+    const expiryTime =
+      cache.timestamp + (cache.data.expires_in * 1000 || CACHE_TTL);
+    if (Date.now() < expiryTime) {
+      return cache.data.access_token;
+    }
+  }
+
   if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
     console.warn("Spotify credentials not found. Using sample data.");
     console.log("Client ID exists:", !!SPOTIFY_CLIENT_ID);
@@ -136,6 +349,11 @@ async function getAccessToken(): Promise<string> {
     }
 
     const data = await response.json();
+    // Cache the token
+    apiCache["access_token"] = {
+      data,
+      timestamp: Date.now(),
+    };
     console.log("Token request successful:", !!data.access_token);
     return data.access_token;
   } catch (error) {
@@ -150,10 +368,19 @@ async function getAccessToken(): Promise<string> {
 async function spotifyApiRequest(
   endpoint: string,
   accessToken?: string,
-  retryCount: number = 0,
-  maxRetries: number = 3
+  skipCache = false
 ): Promise<any> {
   try {
+    // Check cache first if not skipping cache
+    if (!skipCache && apiCache[endpoint]) {
+      const cache = apiCache[endpoint];
+      // Use cached response if it's not expired
+      if (Date.now() - cache.timestamp < CACHE_TTL) {
+        console.log(`Using cached response for ${endpoint}`);
+        return cache.data;
+      }
+    }
+
     // Get access token if not provided
     const token = accessToken || (await getAccessToken());
 
@@ -161,77 +388,46 @@ async function spotifyApiRequest(
       throw new Error("No access token available");
     }
 
-    // Make sure endpoint doesn't have the base URL already
-    const fullEndpoint = endpoint.startsWith("http")
-      ? endpoint
-      : `${SPOTIFY_API_BASE_URL}${endpoint}`;
+    // Add request to queue and wait for result
+    const result = await new Promise((resolve, reject) => {
+      requestQueue.push({
+        endpoint,
+        accessToken: token,
+        resolve,
+        reject,
+      });
 
-    console.log(`Making Spotify API request to: ${fullEndpoint}`);
-
-    const response = await fetch(fullEndpoint, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      // Start processing queue if not already running
+      if (!isProcessingQueue) {
+        processNextRequest();
+      }
     });
 
-    // Handle rate limiting with exponential backoff
-    if (response.status === 429 && retryCount < maxRetries) {
-      // Get retry-after header or use exponential backoff
-      const retryAfter = parseInt(
-        response.headers.get("Retry-After") || "0",
-        10
-      );
-      const delay =
-        retryAfter > 0
-          ? retryAfter * 1000
-          : Math.min(1000 * Math.pow(2, retryCount), 60000); // Exponential backoff with 1min max
+    // Save successful responses to both in-memory cache and localStorage
+    apiCache[endpoint] = {
+      data: result,
+      timestamp: Date.now(),
+    };
 
-      console.warn(
-        `Rate limit exceeded. Retrying after ${delay / 1000}s (attempt ${
-          retryCount + 1
-        }/${maxRetries})...`
-      );
+    // Save to localStorage for persistence
+    saveCacheToStorage(endpoint, result);
 
-      // Wait for the specified delay
-      await new Promise((resolve) => setTimeout(resolve, delay));
-
-      // Retry the request
-      return spotifyApiRequest(
-        endpoint,
-        accessToken,
-        retryCount + 1,
-        maxRetries
-      );
-    }
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch (e) {
-        errorData = { error: { message: errorText || "Unknown error" } };
-      }
-
-      console.error(`Spotify API request failed for ${endpoint}:`, errorData);
-
-      // If it's a rate limit issue but we've exhausted retries, throw a specific error
-      if (response.status === 429) {
-        throw new Error(
-          `Spotify API rate limit exceeded. Please try again later.`
-        );
-      }
-
-      throw new Error(
-        `Spotify API request failed: ${
-          errorData.error?.message || errorData.error || "Unknown error"
-        }`
-      );
-    }
-
-    return response.json();
+    return result;
   } catch (error) {
     console.error(`Error making Spotify API request to ${endpoint}:`, error);
+
+    // If rate limited, try to return cached data even if expired as fallback
+    if (
+      error instanceof Error &&
+      error.message.includes("rate limit") &&
+      apiCache[endpoint]
+    ) {
+      console.log(
+        `Using expired cached data for ${endpoint} due to rate limiting`
+      );
+      return apiCache[endpoint].data;
+    }
+
     throw error;
   }
 }
@@ -982,9 +1178,10 @@ export function formatDuration(ms: number): string {
   return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 }
 
-// Function to get playlist by ID directly
+// Function to get playlist by ID directly with pagination support
 export async function getPlaylistById(
-  id: string
+  id: string,
+  fetchAllTracks = false
 ): Promise<SpotifyPlaylist | null> {
   try {
     if (!id) return null;
@@ -996,40 +1193,112 @@ export async function getPlaylistById(
     }
 
     try {
-      // Get initial playlist data
-      const endpoint = `/playlists/${id}`;
-      const playlist = await spotifyApiRequest(endpoint, accessToken);
+      // Check if we have this playlist in cache
+      const cacheKey = `/playlists/${id}`;
+      if (apiCache[cacheKey]) {
+        console.log(`Using cached playlist data for ${id}`);
 
-      // Check if we need to fetch more tracks
-      if (playlist.tracks.total > playlist.tracks.items.length) {
-        console.log(
-          `Playlist has ${playlist.tracks.total} tracks but only ${playlist.tracks.items.length} loaded. Fetching all...`
-        );
+        // If we have cached data but need all tracks and they're not all loaded
+        const cachedPlaylist = apiCache[cacheKey].data;
+        const hasAllTracks =
+          cachedPlaylist?.tracks?.total ===
+          cachedPlaylist?.tracks?.items?.length;
 
-        // Fetch all remaining tracks using pagination
-        const allTracks = [...playlist.tracks.items];
-        let nextUrl = playlist.tracks.next;
-
-        while (nextUrl) {
-          const trackResponse = await spotifyApiRequest(nextUrl, accessToken);
-          allTracks.push(...trackResponse.items);
-          nextUrl = trackResponse.next;
+        if (fetchAllTracks && !hasAllTracks && cachedPlaylist) {
+          console.log(
+            `Cached playlist doesn't have all tracks, loading the rest...`
+          );
+          // We already have basic playlist info, just need to load the rest of the tracks
+          return await loadRemainingPlaylistTracks(cachedPlaylist, accessToken);
         }
 
-        // Replace the tracks in the playlist object
-        playlist.tracks.items = allTracks;
-        console.log(
-          `Successfully loaded all ${allTracks.length} tracks for playlist`
-        );
+        return cachedPlaylist;
+      }
+
+      // Get initial playlist data
+      const endpoint = `/playlists/${id}`;
+      let playlist = await spotifyApiRequest(endpoint, accessToken);
+
+      // Only fetch all tracks if specifically requested
+      if (
+        fetchAllTracks &&
+        playlist.tracks.total > playlist.tracks.items.length
+      ) {
+        return await loadRemainingPlaylistTracks(playlist, accessToken);
       }
 
       return playlist;
     } catch (error) {
+      // If we get rate limited, return a minimal playlist object
+      if (error instanceof Error && error.message.includes("rate limit")) {
+        console.warn(
+          `Rate limited when fetching playlist ${id}, returning minimal object`
+        );
+        return {
+          id,
+          name: `Playlist (${id.substring(0, 6)}...)`,
+          description: "Loading details...",
+          images: [{ url: "/placeholder.svg", height: 300, width: 300 }],
+          external_urls: { spotify: `https://open.spotify.com/playlist/${id}` },
+          owner: { display_name: "Loading..." },
+          public: true,
+          tracks: { total: 0, items: [] },
+        };
+      }
+
       console.error(`Error fetching playlist ${id}:`, error);
       return null;
     }
   } catch (error) {
     console.error("Error in getPlaylistById:", error);
     return null;
+  }
+}
+
+// Helper function to load remaining tracks for a playlist
+async function loadRemainingPlaylistTracks(
+  playlist: SpotifyPlaylist,
+  accessToken: string
+): Promise<SpotifyPlaylist> {
+  try {
+    console.log(
+      `Playlist has ${playlist.tracks.total} tracks but only ${playlist.tracks.items.length} loaded. Fetching all...`
+    );
+
+    // Fetch all remaining tracks using pagination
+    const allTracks = [...playlist.tracks.items];
+    let nextUrl = playlist.tracks.next as string | null;
+
+    while (nextUrl) {
+      // Add delay between pagination requests to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      try {
+        const trackResponse = await spotifyApiRequest(nextUrl, accessToken);
+        allTracks.push(...trackResponse.items);
+        nextUrl = trackResponse.next;
+      } catch (error) {
+        // If we hit rate limits during pagination, just return what we have
+        if (error instanceof Error && error.message.includes("rate limit")) {
+          console.warn(
+            "Rate limit hit during playlist pagination, returning partial results"
+          );
+          break;
+        }
+        throw error;
+      }
+    }
+
+    // Replace the tracks in the playlist object
+    playlist.tracks.items = allTracks;
+    console.log(
+      `Successfully loaded ${allTracks.length} tracks for playlist (${playlist.tracks.total} total)`
+    );
+
+    return playlist;
+  } catch (error) {
+    console.error("Error loading remaining playlist tracks:", error);
+    // Return the playlist with the tracks we already have
+    return playlist;
   }
 }

@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MovieReviewModal } from "@/components/movie-review-modal";
 import { TVReviewModal } from "@/components/tv-review-modal";
 import { MediaStatsModal } from "@/components/media-stats-modal";
+import { useDataPreload } from "@/hooks/use-data-preload";
 
 interface Movie {
   imdbUrl: string;
@@ -1125,24 +1126,28 @@ function getRatingColor(rating: number) {
 }
 
 export default function MediaPage() {
+  const { data, preloadMedia } = useDataPreload();
   const [moviesWithPosters, setMoviesWithPosters] = useState<Movie[]>([]);
   const [topMoviesWithPosters, setTopMoviesWithPosters] = useState<Movie[]>([]);
-  const [showsWithPosters, setShowsWithPosters] = useState<TVShow[]>([]);
-  const [topShowsWithPosters, setTopShowsWithPosters] = useState<TVShow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [tvShowsWithPosters, setTVShowsWithPosters] = useState<TVShow[]>([]);
+  const [topTVShowsWithPosters, setTopTVShowsWithPosters] = useState<TVShow[]>(
+    []
+  );
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [selectedShow, setSelectedShow] = useState<TVShow | null>(null);
+  const [selectedTVShow, setSelectedTVShow] = useState<TVShow | null>(null);
   const [isMovieModalOpen, setIsMovieModalOpen] = useState(false);
   const [isTVModalOpen, setIsTVModalOpen] = useState(false);
-  const [movieSortOption, setMovieSortOption] =
-    useState<string>("highest-rating");
-  const [tvSortOption, setTVSortOption] = useState<string>("highest-rating");
-  const [movieOriginalOrder, setMovieOriginalOrder] = useState<Movie[]>([]);
-  const [tvOriginalOrder, setTVOriginalOrder] = useState<TVShow[]>([]);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [movieSortOption, setMovieSortOption] = useState("highest-rating");
+  const [tvSortOption, setTVSortOption] = useState("highest-rating");
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    // Trigger preload data for media
+    preloadMedia();
+
+    // Keep existing data loading logic for now
     async function fetchMediaData() {
       setIsLoading(true);
       try {
@@ -1236,22 +1241,10 @@ export default function MediaPage() {
         );
 
         // Store the original order
-        setMovieOriginalOrder(updatedMovies);
-        setTVOriginalOrder(updatedShows);
-
-        // Sort movies by rating (highest first) initially
-        const sortedMovies = [...updatedMovies].sort(
-          (a, b) => (b.rating || 0) - (a.rating || 0)
-        );
-        setMoviesWithPosters(sortedMovies);
+        setMoviesWithPosters(updatedMovies);
         setTopMoviesWithPosters(updatedTopMovies);
-
-        // Sort TV shows by rating (highest first) initially
-        const sortedShows = [...updatedShows].sort(
-          (a, b) => (b.rating || 0) - (a.rating || 0)
-        );
-        setShowsWithPosters(sortedShows);
-        setTopShowsWithPosters(updatedTopShows);
+        setTVShowsWithPosters(updatedShows);
+        setTopTVShowsWithPosters(updatedTopShows);
       } catch (error) {
         console.error("Error fetching media data:", error);
       } finally {
@@ -1260,7 +1253,7 @@ export default function MediaPage() {
     }
 
     fetchMediaData();
-  }, []);
+  }, [preloadMedia]);
 
   const openMovieReviewModal = (movie: Movie) => {
     setSelectedMovie(movie);
@@ -1272,7 +1265,7 @@ export default function MediaPage() {
   };
 
   const openTVReviewModal = (show: TVShow) => {
-    setSelectedShow(show);
+    setSelectedTVShow(show);
     setIsTVModalOpen(true);
   };
 
@@ -1298,10 +1291,10 @@ export default function MediaPage() {
         sortedMovies.sort((a, b) => (a.year || 0) - (b.year || 0));
         break;
       case "newest-seen":
-        sortedMovies = [...movieOriginalOrder].reverse();
+        sortedMovies = [...moviesWithPosters].reverse();
         break;
       case "oldest-seen":
-        sortedMovies = [...movieOriginalOrder];
+        sortedMovies = [...moviesWithPosters];
         break;
       default:
         sortedMovies.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -1312,7 +1305,7 @@ export default function MediaPage() {
 
   const sortTVShows = (option: string) => {
     setTVSortOption(option);
-    let sortedShows = [...showsWithPosters];
+    let sortedShows = [...tvShowsWithPosters];
 
     switch (option) {
       case "highest-rating":
@@ -1332,16 +1325,16 @@ export default function MediaPage() {
         );
         break;
       case "newest-seen":
-        sortedShows = [...tvOriginalOrder].reverse();
+        sortedShows = [...topTVShowsWithPosters].reverse();
         break;
       case "oldest-seen":
-        sortedShows = [...tvOriginalOrder];
+        sortedShows = [...topTVShowsWithPosters];
         break;
       default:
         sortedShows.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
 
-    setShowsWithPosters(sortedShows);
+    setTVShowsWithPosters(sortedShows);
   };
 
   // Filter media based on search query
@@ -1376,8 +1369,8 @@ export default function MediaPage() {
   );
 
   const filteredShows = useMemo(
-    () => filterMediaBySearchQuery(showsWithPosters, searchQuery) as TVShow[],
-    [showsWithPosters, searchQuery, filterMediaBySearchQuery]
+    () => filterMediaBySearchQuery(tvShowsWithPosters, searchQuery) as TVShow[],
+    [tvShowsWithPosters, searchQuery, filterMediaBySearchQuery]
   );
 
   // Handle search input change
@@ -1528,7 +1521,7 @@ export default function MediaPage() {
                     Favourite TV Shows
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {topShowsWithPosters.map((show, index) => (
+                    {topTVShowsWithPosters.map((show, index) => (
                       <TopTVShowCard
                         key={`${show.title}-${show.firstAirYear}`}
                         show={show}
@@ -1569,7 +1562,8 @@ export default function MediaPage() {
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-bold">All TV Shows</h2>
                       <div className="px-2 py-1 bg-muted rounded-md text-sm">
-                        {showsWithPosters.length + topShowsWithPosters.length}
+                        {tvShowsWithPosters.length +
+                          topTVShowsWithPosters.length}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1632,7 +1626,7 @@ export default function MediaPage() {
         movies={filteredMovies}
         topMovies={topMoviesWithPosters}
         shows={filteredShows}
-        topShows={topShowsWithPosters}
+        topShows={topTVShowsWithPosters}
       />
 
       {/* Movie Review Modal */}
@@ -1645,11 +1639,11 @@ export default function MediaPage() {
       )}
 
       {/* TV Show Review Modal */}
-      {selectedShow && (
+      {selectedTVShow && (
         <TVReviewModal
           isOpen={isTVModalOpen}
           onClose={closeTVReviewModal}
-          show={selectedShow}
+          show={selectedTVShow}
         />
       )}
     </div>
