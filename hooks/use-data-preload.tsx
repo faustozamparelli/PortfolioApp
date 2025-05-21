@@ -150,6 +150,7 @@ const MY_PLAYLISTS = [
   "https://open.spotify.com/playlist/5ouJiG6KMFZ5MYNqOd2mMu", // Rotation
   "https://open.spotify.com/playlist/0mBY3992twtb08xkyo82nd", // 100% bops
   "https://open.spotify.com/playlist/1BpQoiUYCmDr2Ey6obvU9r", // Stranger
+  "https://open.spotify.com/playlist/3mgsxAN7hma9pWTkJ6NFEs", // DJ7
   "https://open.spotify.com/playlist/6kRYLNLx0UxQBcEU1Uygjp", // Sfascio
   "https://open.spotify.com/playlist/5PpWmuf9v6lYeyIUNwcOsm", // Overthinking
   "https://open.spotify.com/playlist/0RHNS7CWwDpCwyVsYVX8Ts", // Estate

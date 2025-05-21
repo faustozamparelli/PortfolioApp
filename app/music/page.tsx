@@ -174,6 +174,7 @@ const MY_PLAYLISTS = [
   "https://open.spotify.com/playlist/5ouJiG6KMFZ5MYNqOd2mMu", // Rotation
   "https://open.spotify.com/playlist/0mBY3992twtb08xkyo82nd", // 100% bops
   "https://open.spotify.com/playlist/1BpQoiUYCmDr2Ey6obvU9r", // Stranger
+  "https://open.spotify.com/playlist/3mgsxAN7hma9pWTkJ6NFEs", // DJ7
   "https://open.spotify.com/playlist/6kRYLNLx0UxQBcEU1Uygjp", // Sfascio
   "https://open.spotify.com/playlist/5PpWmuf9v6lYeyIUNwcOsm", // Overthinking
   "https://open.spotify.com/playlist/0RHNS7CWwDpCwyVsYVX8Ts", // Estate
@@ -257,15 +258,8 @@ const LazyArtistsSection = ({
 
   useEffect(() => {
     if (!isLoading && artists.length > 0) {
-      // Initially show 5 artists
-      setVisibleArtists(artists.slice(0, 5));
-
-      // Then load the rest after a short delay
-      const timer = setTimeout(() => {
-        setVisibleArtists(artists);
-      }, 500);
-
-      return () => clearTimeout(timer);
+      // Show all artists immediately instead of just the first 5
+      setVisibleArtists(artists);
     }
   }, [isLoading, artists]);
 
@@ -373,11 +367,6 @@ const LazyArtistsSection = ({
           </CardFooter>
         </Card>
       ))}
-      {visibleArtists.length < artists.length && (
-        <div className="col-span-full flex justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-gray-100"></div>
-        </div>
-      )}
     </div>
   );
 };
