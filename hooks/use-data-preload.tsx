@@ -170,7 +170,6 @@ const favoriteArtists: MusicItem[] = [
       "Ok here me out... I'm not even going to defend the person that he has become, I really hope he will find himself again. But his music has really changed my life, he truly is a genious artist and I invite you to listen to some of his less known stuff like 'Roses', 'Only One', 'Never See Me Again with Orchestral Intro', 'Brothers'... Thank me later.",
     rank: 1,
   },
-  // Rest of favorite artists...
   {
     spotifyUrl: "https://open.spotify.com/artist/3TVXtAsR1Inumwj472S9r4",
     type: "artist",
@@ -198,6 +197,90 @@ const favoriteArtists: MusicItem[] = [
     rating: 10,
     review: "test",
     rank: 5,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6lcwlkAjBPSKnFBZjjZFJs",
+    type: "artist",
+    rating: 10,
+    review: "test",
+    rank: 6,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6EPlBSH2RSiettczlz7ihV",
+    type: "artist",
+    rating: 9.8,
+    review: "test",
+    rank: 7,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/15UsOTVnJzReFVN1VCnxy4",
+    type: "artist",
+    rating: 9.5,
+    review: "test",
+    rank: 8,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6FBDaR13swtiWwGhX1WQsP",
+    type: "artist",
+    rating: 9,
+    review: "test",
+    rank: 9,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4O15NlyKLIASxsJ0PrXPfz",
+    type: "artist",
+    rating: 9,
+    review: "test",
+    rank: 10,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/5H4yInM5zmHqpKIoMNAx4r",
+    type: "artist",
+    rating: 8.8,
+    review: "test",
+    rank: 11,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4oLeXFyACqeem2VImYeBFe",
+    type: "artist",
+    rating: 8.5,
+    review: "test",
+    rank: 12,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/1WaFQSHVGZQJTbf0BdxdNo",
+    type: "artist",
+    rating: 8.4,
+    review: "test",
+    rank: 13,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/0z4gvV4rjIZ9wHck67ucSV",
+    type: "artist",
+    rating: 8,
+    review: "test",
+    rank: 14,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/0fA0VVWsXO9YnASrzqfmYu",
+    type: "artist",
+    rating: 8,
+    review: "test",
+    rank: 15,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/3tlXnStJ1fFhdScmQeLpuG",
+    type: "artist",
+    rating: 7.8,
+    review: "test",
+    rank: 16,
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/31TPClRtHm23RisEBtV3X7",
+    type: "artist",
+    rating: 7,
+    review: "test",
+    rank: 17,
   },
 ];
 
@@ -1075,6 +1158,12 @@ export const DataPreloadProvider = ({
 
   // Effect to preload data when the app starts
   useEffect(() => {
+    // Clear existing checkpoints to force a refresh with the updated data
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(CHECKPOINT_KEYS.MUSIC);
+      console.log("Cleared music checkpoint to refresh data");
+    }
+
     // Start preloading after the current page has loaded
     // Use a timeout to ensure we don't interfere with initial page render
     const timer = setTimeout(() => {
