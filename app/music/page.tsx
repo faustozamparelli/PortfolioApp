@@ -36,11 +36,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Helper function to get color based on rating
 function getRatingColor(rating: number) {
-  if (rating >= 9) return "text-green-500 dark:text-green-400";
-  if (rating >= 7) return "text-blue-500 dark:text-blue-400";
-  if (rating >= 5) return "text-yellow-500 dark:text-yellow-400";
-  if (rating >= 3) return "text-orange-500 dark:text-orange-400";
-  return "text-red-500 dark:text-red-400";
+  if (rating >= 10) return "bg-amber-500/20 text-amber-500"; // Gold for 10-11
+  if (rating >= 9) return "bg-emerald-500/20 text-emerald-500"; // Emerald for 9-9.9
+  if (rating >= 8) return "bg-green-500/20 text-green-500"; // Green for 8-8.9
+  if (rating >= 7) return "bg-teal-500/20 text-teal-500"; // Teal for 7-7.9
+  if (rating >= 6) return "bg-blue-500/20 text-blue-500"; // Blue for 6-6.9
+  if (rating >= 5) return "bg-indigo-500/20 text-indigo-500"; // Indigo for 5-5.9
+  if (rating >= 4) return "bg-purple-500/20 text-purple-500"; // Purple for 4-4.9
+  if (rating >= 3) return "bg-yellow-500/20 text-yellow-500"; // Yellow for 3-3.9
+  if (rating >= 2) return "bg-orange-500/20 text-orange-500"; // Orange for 2-2.9
+  return "bg-red-500/20 text-red-500"; // Red for 0-1.9
 }
 
 // Add a skeleton loader component
@@ -173,15 +178,12 @@ const LazyArtistsSection = ({
             </h3>
             <div className="flex justify-center items-center gap-1 mt-1">
               <span
-                className={`text-sm font-bold ${getRatingColor(artist.rating)}`}
+                className={`px-2 py-1 rounded-md font-medium text-sm ${getRatingColor(
+                  artist.rating
+                )}`}
               >
                 {artist.rating.toFixed(1)}
               </span>
-              <Star
-                className={`h-3 w-3 fill-current ${getRatingColor(
-                  artist.rating
-                )}`}
-              />
             </div>
             {artist.genres && artist.genres.length > 0 && (
               <div className="flex flex-wrap justify-center gap-1 mt-2">
