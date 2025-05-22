@@ -173,12 +173,12 @@ const LazyArtistsSection = ({
             </div>
           </div>
           <CardContent className="p-2">
-            <h3 className="font-bold text-sm line-clamp-1 text-center">
+            <h3 className="font-bold text-base line-clamp-1 text-center">
               {artist.name}
             </h3>
             <div className="flex justify-center items-center mt-0.5">
               <span
-                className={`px-1.5 py-0.5 rounded-md font-medium text-sm ${getRatingColor(
+                className={`px-1.5 py-0.5 rounded-md font-medium text-base ${getRatingColor(
                   artist.rating
                 )}`}
               >
@@ -190,13 +190,13 @@ const LazyArtistsSection = ({
                 {artist.genres.slice(0, 2).map((genre: string, idx: number) => (
                   <span
                     key={idx}
-                    className="px-1 py-0.5 bg-muted text-[11px] rounded-md"
+                    className="px-1 py-0.5 bg-muted text-[12px] rounded-md"
                   >
                     {genre}
                   </span>
                 ))}
                 {artist.genres.length > 2 && (
-                  <span className="px-1 py-0.5 bg-muted text-[11px] rounded-md">
+                  <span className="px-1 py-0.5 bg-muted text-[12px] rounded-md">
                     +{artist.genres.length - 2}
                   </span>
                 )}
@@ -204,11 +204,7 @@ const LazyArtistsSection = ({
             )}
             {artist.review && artist.review.trim() !== "" && (
               <div className="mt-1 text-center">
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-[10px]"
-                >
+                <Button variant="link" size="sm" className="p-0 h-auto text-xs">
                   Read my review
                 </Button>
               </div>
@@ -218,7 +214,7 @@ const LazyArtistsSection = ({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-[10px] h-6"
+              className="w-full text-xs h-6"
               asChild
               onClick={(e) => e.stopPropagation()}
             >
