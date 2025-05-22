@@ -23,6 +23,20 @@ interface ArtistReviewModalProps {
   };
 }
 
+// Helper function to get color based on rating
+const getRatingColor = (rating: number) => {
+  if (rating >= 10) return "bg-amber-500/20 text-amber-500"; // Gold for 10-11
+  if (rating >= 9) return "bg-emerald-500/20 text-emerald-500"; // Emerald for 9-9.9
+  if (rating >= 8) return "bg-green-500/20 text-green-500"; // Green for 8-8.9
+  if (rating >= 7) return "bg-teal-500/20 text-teal-500"; // Teal for 7-7.9
+  if (rating >= 6) return "bg-blue-500/20 text-blue-500"; // Blue for 6-6.9
+  if (rating >= 5) return "bg-indigo-500/20 text-indigo-500"; // Indigo for 5-5.9
+  if (rating >= 4) return "bg-purple-500/20 text-purple-500"; // Purple for 4-4.9
+  if (rating >= 3) return "bg-yellow-500/20 text-yellow-500"; // Yellow for 3-3.9
+  if (rating >= 2) return "bg-orange-500/20 text-orange-500"; // Orange for 2-2.9
+  return "bg-red-500/20 text-red-500"; // Red for 0-1.9
+};
+
 export function ArtistReviewModal({
   isOpen,
   onClose,
@@ -87,7 +101,11 @@ export function ArtistReviewModal({
                     <Star className="w-6 h-6 text-red-500 fill-current ml-2" />
                   )}
                 </div>
-                <span className="text-xl font-medium text-primary">
+                <span
+                  className={`px-2 py-1 rounded-md font-medium text-sm ${getRatingColor(
+                    artist.rating
+                  )}`}
+                >
                   {artist.rating.toFixed(1)}/10
                 </span>
               </div>

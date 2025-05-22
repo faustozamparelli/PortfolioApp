@@ -127,7 +127,7 @@ const LazyArtistsSection = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
         {Array(5)
           .fill(0)
           .map((_, i) => (
@@ -138,7 +138,7 @@ const LazyArtistsSection = ({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
       {visibleArtists.map((artist) => (
         <Card
           key={artist.spotifyUrl}
@@ -168,17 +168,17 @@ const LazyArtistsSection = ({
                 <User className="h-16 w-16 text-muted-foreground opacity-20" />
               </div>
             )}
-            <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+            <div className="absolute top-1 left-1 bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">
               #{artist.rank}
             </div>
           </div>
-          <CardContent className="p-3">
+          <CardContent className="p-2">
             <h3 className="font-bold text-sm line-clamp-1 text-center">
               {artist.name}
             </h3>
-            <div className="flex justify-center items-center gap-1 mt-1">
+            <div className="flex justify-center items-center mt-0.5">
               <span
-                className={`px-2 py-1 rounded-md font-medium text-sm ${getRatingColor(
+                className={`px-1.5 py-0.5 rounded-md font-medium text-sm ${getRatingColor(
                   artist.rating
                 )}`}
               >
@@ -186,35 +186,39 @@ const LazyArtistsSection = ({
               </span>
             </div>
             {artist.genres && artist.genres.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-1 mt-2">
+              <div className="flex flex-wrap justify-center gap-0.5 mt-1">
                 {artist.genres.slice(0, 2).map((genre: string, idx: number) => (
                   <span
                     key={idx}
-                    className="px-1.5 py-0.5 bg-muted text-xs rounded-md"
+                    className="px-1 py-0.5 bg-muted text-[11px] rounded-md"
                   >
                     {genre}
                   </span>
                 ))}
                 {artist.genres.length > 2 && (
-                  <span className="px-1.5 py-0.5 bg-muted text-xs rounded-md">
+                  <span className="px-1 py-0.5 bg-muted text-[11px] rounded-md">
                     +{artist.genres.length - 2}
                   </span>
                 )}
               </div>
             )}
             {artist.review && artist.review.trim() !== "" && (
-              <div className="mt-2 text-center">
-                <Button variant="link" size="sm" className="p-0 h-auto text-xs">
+              <div className="mt-1 text-center">
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto text-[10px]"
+                >
                   Read my review
                 </Button>
               </div>
             )}
           </CardContent>
-          <CardFooter className="p-2 pt-0">
+          <CardFooter className="p-1.5 pt-0">
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-xs"
+              className="w-full text-[10px] h-6"
               asChild
               onClick={(e) => e.stopPropagation()}
             >
@@ -224,7 +228,7 @@ const LazyArtistsSection = ({
                 rel="noopener noreferrer"
               >
                 <span>Open in Spotify</span>
-                <ExternalLink className="h-3 w-3 ml-1" />
+                <ExternalLink className="h-2.5 w-2.5 ml-1" />
               </a>
             </Button>
           </CardFooter>
@@ -494,8 +498,8 @@ export default function MusicPage() {
                       <Play className="h-6 w-6 text-white fill-current" />
                     </div>
                   </div>
-                  <p className="font-medium text-xs truncate">{track.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="font-medium text-base truncate">{track.name}</p>
+                  <p className="text-sm text-muted-foreground truncate">
                     {track.artists.map((a) => a.name).join(", ")}
                   </p>
                 </a>
@@ -549,8 +553,8 @@ export default function MusicPage() {
                   <Play className="h-10 w-10 text-white fill-current" />
                 </div>
               </div>
-              <p className="font-medium text-sm truncate">{track.name}</p>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="font-medium text-base truncate">{track.name}</p>
+              <p className="text-sm text-muted-foreground truncate">
                 {track.artists?.map((a) => a.name).join(", ")}
               </p>
             </a>
@@ -579,7 +583,7 @@ export default function MusicPage() {
                   onError={handleImageError}
                 />
               </div>
-              <p className="font-medium text-sm truncate text-center">
+              <p className="font-medium text-base truncate text-center">
                 {artist.name}
               </p>
             </a>
