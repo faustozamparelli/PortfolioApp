@@ -1046,9 +1046,9 @@ const topShows: TVShow[] = [
     isTopShow: true,
   },
   {
-    // Mr Robot
-    imdbUrl: "https://www.imdb.com/title/tt4158110/",
-    rating: 9,
+    // Last Change U
+    imdbUrl: "https://www.imdb.com/title/tt13087512/",
+    rating: 9.5,
     review: "",
     isTopShow: true,
   },
@@ -1056,6 +1056,13 @@ const topShows: TVShow[] = [
 
 // All shows
 const shows: TVShow[] = [
+  
+  {
+    // Mr Robot
+    imdbUrl: "https://www.imdb.com/title/tt4158110/",
+    rating: 9,
+    review: "",
+  },
   {
     // Stranger Things
     imdbUrl: "https://www.imdb.com/title/tt4574334/",

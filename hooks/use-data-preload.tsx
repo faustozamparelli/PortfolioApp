@@ -176,28 +176,32 @@ const favoriteArtists: MusicItem[] = [
     spotifyUrl: "https://open.spotify.com/artist/1wxPItEzr7U7rGSMPqZ25r",
     type: "artist",
     rating: 11,
-    review: "I am going based soley on the impact and influnce this guy/girl had on the music industry. He is the Satoshi Nakamoto of music.",
+    review:
+      "I am going based soley on the impact and influnce this guy/girl had on the music industry. He is the Satoshi Nakamoto of music.",
     rank: 2,
   },
   {
     spotifyUrl: "https://open.spotify.com/artist/3TVXtAsR1Inumwj472S9r4",
     type: "artist",
     rating: 10.8,
-    review: "Greatest rapper of all time, I don't care what anyone says. This guy has released so many bangers, he can't miss. If you are a Kendrick Lamar fan, get a ear transplant I don't know what to tell you.",
+    review:
+      "Greatest rapper of all time, I don't care what anyone says. This guy has released so many bangers, he can't miss. If you are a Kendrick Lamar fan, get a ear transplant I don't know what to tell you.",
     rank: 3,
   },
   {
     spotifyUrl: "https://open.spotify.com/artist/6lcwlkAjBPSKnFBZjjZFJs",
     type: "artist",
     rating: 10.5,
-    review: "I don't know how to describe this style the best thing that comes to mind rewatching an old VHS tape from your childhood and feeling a mix of nostalgia and sadness.",
+    review:
+      "I don't know how to describe this style the best thing that comes to mind rewatching an old VHS tape from your childhood and feeling a mix of nostalgia and sadness.",
     rank: 4,
   },
   {
     spotifyUrl: "https://open.spotify.com/artist/4MCBfE4596Uoi2O4DtmEMz",
     type: "artist",
     rating: 10,
-    review: "RIP to the goat, pure talent... go listen to his freestyles. I have to base the ratings also on how many liked songs I have per artist and this guy completely carried my 2017/18/19.",
+    review:
+      "RIP to the goat, pure talent... go listen to his freestyles. I have to base the ratings also on how many liked songs I have per artist and this guy completely carried my 2017/18/19.",
     rank: 5,
   },
   {
@@ -208,83 +212,92 @@ const favoriteArtists: MusicItem[] = [
     rank: 6,
   },
   {
-    spotifyUrl: "https://open.spotify.com/artist/6EPlBSH2RSiettczlz7ihV",
-    type: "artist",
-    rating: 9.8,
-    review: "Kinda controversial, many say that he has only one flow but I have a ton of his songs in my liked, I could hear them on repeat.",
-    rank: 7,
-  },
-  {
     spotifyUrl: "https://open.spotify.com/artist/15UsOTVnJzReFVN1VCnxy4",
     type: "artist",
     rating: 9.5,
-    review: "RIP, I loved his evolution and how much he changed style, it's a shame that he is not here with us because I 100% believe he would have still been on the top.",
+    review:
+      "RIP, I loved his evolution and how much he changed style, it's a shame that he is not here with us because I 100% believe he would have still been on the top.",
     rank: 8,
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/6FBDaR13swtiWwGhX1WQsP",
-    type: "artist",
-    rating: 9,
-    review: "",
-    rank: 9,
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/4O15NlyKLIASxsJ0PrXPfz",
-    type: "artist",
-    rating: 9,
-    review: "",
-    rank: 10,
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/5H4yInM5zmHqpKIoMNAx4r",
-    type: "artist",
-    rating: 8.8,
-    review: "",
-    rank: 11,
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/4oLeXFyACqeem2VImYeBFe",
-    type: "artist",
-    rating: 8.5,
-    review: "",
-    rank: 12,
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/1WaFQSHVGZQJTbf0BdxdNo",
-    type: "artist",
-    rating: 8.4,
-    review: "",
-    rank: 13,
   },
   {
     spotifyUrl: "https://open.spotify.com/artist/0z4gvV4rjIZ9wHck67ucSV",
     type: "artist",
+    rating: 9.5,
+    review: "",
+    rank: 9
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6FBDaR13swtiWwGhX1WQsP",
+    type: "artist",
+    rating: 9.0,
+    review: "",
+    rank: 10
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/31TPClRtHm23RisEBtV3X7",
+    type: "artist",
+    rating: 8.8,
+    review: "",
+    rank: 11
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4O15NlyKLIASxsJ0PrXPfz",
+    type: "artist",
+    rating: 8.8,
+    review: "",
+    rank: 12
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/6EPlBSH2RSiettczlz7ihV",
+    type: "artist",
+    rating: 8.5,
+    review:
+      "Kinda controversial, many say that he has only one flow but I have a ton of his songs in my liked, I could hear them on repeat.",
+    rank: 13
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4dpARuHxo51G3z768sgnrY",
+    type: "artist",
+    rating: 8.5,
+    review: "For real men only...",
+    rank: 14
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/1WaFQSHVGZQJTbf0BdxdNo",
+    type: "artist",
     rating: 8,
     review: "",
-    rank: 14,
+    rank: 15
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/4oLeXFyACqeem2VImYeBFe",
+    type: "artist",
+    rating: 8,
+    review: "",
+    rank: 16
   },
   {
     spotifyUrl: "https://open.spotify.com/artist/0fA0VVWsXO9YnASrzqfmYu",
     type: "artist",
     rating: 8,
     review: "",
-    rank: 15,
+    rank: 17
+  },
+  {
+    spotifyUrl: "https://open.spotify.com/artist/5H4yInM5zmHqpKIoMNAx4r",
+    type: "artist",
+    rating: 7.5,
+    review: "",
+    rank: 18
   },
   {
     spotifyUrl: "https://open.spotify.com/artist/3tlXnStJ1fFhdScmQeLpuG",
     type: "artist",
-    rating: 7.8,
+    rating: 7.5,
     review: "",
-    rank: 16,
-  },
-  {
-    spotifyUrl: "https://open.spotify.com/artist/31TPClRtHm23RisEBtV3X7",
-    type: "artist",
-    rating: 7,
-    review: "",
-    rank: 17,
-  },
-];
+    rank: 19
+  }
+]
 
 // Provider component
 export const DataPreloadProvider = ({
