@@ -138,11 +138,15 @@ const LazyArtistsSection = ({
         <Card
           key={artist.spotifyUrl}
           className={`overflow-hidden ${
-            artist.review
+            artist.review && artist.review.trim() !== ""
               ? "cursor-pointer hover:shadow-lg transition-shadow"
               : ""
           }`}
-          onClick={() => artist.review && openArtistReviewModal(artist)}
+          onClick={() =>
+            artist.review &&
+            artist.review.trim() !== "" &&
+            openArtistReviewModal(artist)
+          }
         >
           <div className="relative pb-[100%] overflow-hidden">
             {artist.coverUrl ? (
@@ -196,7 +200,7 @@ const LazyArtistsSection = ({
                 )}
               </div>
             )}
-            {artist.review && (
+            {artist.review && artist.review.trim() !== "" && (
               <div className="mt-2 text-center">
                 <Button variant="link" size="sm" className="p-0 h-auto text-xs">
                   Read my review
