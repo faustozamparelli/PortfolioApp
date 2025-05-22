@@ -879,6 +879,17 @@ const movies: Movie[] = [
   { imdbUrl: "https://www.imdb.com/title/tt1877830/", rating: 0, review: "" }, // The Batman (2022)
   { imdbUrl: "https://www.imdb.com/title/tt0468569/", rating: 0, review: "" }, // The Dark Knight
   { imdbUrl: "https://www.imdb.com/title/tt0119217/", rating: 0, review: "" }, // Good Will Hunting
+  { imdbUrl: "https://www.imdb.com/title/tt2005151/", rating: 0, review: "" }, // War Dogs
+  { imdbUrl: "https://www.imdb.com/title/tt1232829/", rating: 0, review: "" }, // Jump Street
+  { imdbUrl: "https://www.imdb.com/title/tt1700841/", rating: 0, review: "" }, // Sausage Party
+  { imdbUrl: "https://www.imdb.com/title/tt1001526/", rating: 0, review: "" }, // Megamind
+  { imdbUrl: "https://www.imdb.com/title/tt0462538/", rating: 0, review: "" }, // The Simpsons Movie
+  { imdbUrl: "https://www.imdb.com/title/tt0892769/", rating: 0, review: "" }, // How to Train Your Dragon
+  { imdbUrl: "https://www.imdb.com/title/tt21819228/", rating: 0, review: "" }, // Stutz
+  { imdbUrl: "https://www.imdb.com/title/tt2273657/", rating: 0, review: "" }, // True Story
+  { imdbUrl: "https://www.imdb.com/title/tt1895587/", rating: 0, review: "" }, // Spotlight
+  { imdbUrl: "https://www.imdb.com/title/tt3774114/", rating: 0, review: "" }, // Snowden
+  { imdbUrl: "https://www.imdb.com/title/tt4044364/", rating: 0, review: "" }, // Citizenfour
   { imdbUrl: "https://www.imdb.com/title/tt1821597/", rating: 0, review: "" }, // Scialla – Stai Sereno
   { imdbUrl: "https://www.imdb.com/title/tt0469494/", rating: 0, review: "" }, // There Will Be Blood
   { imdbUrl: "https://www.imdb.com/title/tt10272386/", rating: 0, review: "" }, // The Father
